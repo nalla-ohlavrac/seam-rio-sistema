@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestão de Produção de Biquínis</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9e1e7;
+      --surface: #ffffff;
+      --soft: #f4f7f8;
+      --accent: #007f7a;
+      --accent-2: #c0476b;
+      --accent-3: #f4a261;
+      --good: #18794e;
+      --warn: #a15c00;
+      --danger: #b42318;
+      --shadow: 0 14px 40px rgba(31, 41, 51, .12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(0, 127, 122, .13), transparent 34%),
+        linear-gradient(315deg, rgba(192, 71, 107, .12), transparent 30%),
+        var(--soft);
+      min-height: 100vh;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    body.auth-locked {
+      overflow: hidden;
+    }
+
+    body.auth-locked .app-shell {
+      display: none;
+    }
+
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    body:not(.auth-locked) .auth-gate {
+      display: none;
+    }
+
+    .auth-card {
+      width: min(460px, 100%);
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .auth-logo {
+      width: 150px;
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .auth-card h1 {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .auth-card p {
+      color: var(--muted);
+      margin: 0 0 18px;
+      line-height: 1.45;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .auth-hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .user-admin {
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .user-admin.show {
+      display: block;
+    }
+
+    .user-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .user-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px 12px;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .app-shell {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .brand-block {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .brand-logo {
+      width: clamp(118px, 16vw, 190px);
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .58);
+      border: 1px solid rgba(217, 225, 231, .7);
+      box-shadow: 0 8px 24px rgba(31, 41, 51, .08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(31, 41, 51, .05);
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn.danger {
+      color: var(--danger);
+      border-color: rgba(180, 35, 24, .28);
+    }
+
+    .btn.icon {
+      width: 42px;
+      padding: 0;
+    }
+
+    .btn:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(0, 127, 122, .22);
+      outline-offset: 2px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, .86);
+      border: 1px solid rgba(217, 225, 231, .9);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 94px;
+      box-shadow: 0 8px 26px rgba(31, 41, 51, .07);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .metric strong {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .chart-panel {
+      margin-bottom: 16px;
+    }
+
+    .production-chart {
+      display: grid;
+      gap: 14px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr) 94px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chart-label {
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .chart-track {
+      min-height: 34px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .chart-bar {
+      height: 14px;
+      border-radius: 999px;
+      min-width: 4px;
+      transition: width .2s ease;
+    }
+
+    .chart-bar.orders {
+      background: var(--accent);
+    }
+
+    .chart-bar.pieces {
+      background: var(--accent-2);
+    }
+
+    .chart-values {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-align: right;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-swatch {
+      width: 22px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .legend-swatch.pieces {
+      background: var(--accent-2);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(390px, .88fr) minmax(560px, 1.12fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: clip;
+    }
+
+    .panel-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 156px;
+      gap: 10px;
+      padding: 14px 16px 0;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 40px;
+      padding: 9px 10px;
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .order-list {
+      padding: 12px 16px 16px;
+      display: grid;
+      gap: 10px;
+      max-height: 630px;
+      overflow: auto;
+    }
+
+    .order-card {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 9px;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 4px 14px rgba(31, 41, 51, .06);
+    }
+
+    .order-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 127, 122, .13);
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .order-title {
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: rgba(0, 127, 122, .1);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pill.done { background: rgba(24, 121, 78, .12); color: var(--good); }
+    .pill.late { background: rgba(180, 35, 24, .11); color: var(--danger); }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mini-stats strong {
+      display: block;
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .form-wrap {
+      padding: 16px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .stage-strip {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stage-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 8px;
+      min-height: 72px;
+      cursor: pointer;
+      text-align: left;
+      display: grid;
+      align-content: space-between;
+      gap: 8px;
+    }
+
+    .stage-btn.current {
+      border-color: var(--accent);
+      background: rgba(0, 127, 122, .08);
+    }
+
+    .stage-btn.complete {
+      border-color: rgba(24, 121, 78, .45);
+      background: rgba(24, 121, 78, .08);
+    }
+
+    .stage-btn strong {
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .stage-btn span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+    }
+
+    .left-actions, .right-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .7);
+    }
+
+    .email-preview {
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      white-space: pre-wrap;
+      color: #344054;
+      min-height: 136px;
+      line-height: 1.45;
+    }
+
+    .delivery-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      background: #f8fafb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px;
+    }
+
+    .delivery-panel strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .delivery-panel span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .delivery-panel.late {
+      border-color: rgba(180, 35, 24, .35);
+      background: rgba(180, 35, 24, .08);
+    }
+
+    .delivery-panel.soon {
+      border-color: rgba(244, 162, 97, .55);
+      background: rgba(244, 162, 97, .14);
+    }
+
+    .delivery-panel.done {
+      border-color: rgba(24, 121, 78, .35);
+      background: rgba(24, 121, 78, .08);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .2s ease;
+      pointer-events: none;
+      max-width: min(420px, calc(100vw - 36px));
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .required {
+      color: var(--accent-2);
+    }
+
+    @media (max-width: 1080px) {
+      header, main { grid-template-columns: 1fr; }
+      .toolbar { justify-content: flex-start; }
+      .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell { width: min(100vw - 20px, 720px); padding-top: 14px; }
+      .summary-grid, .filters, .grid-2, .grid-3, .grid-4, .stage-strip { grid-template-columns: 1fr; }
+      .chart-row { grid-template-columns: 1fr; gap: 6px; }
+      .chart-values { text-align: left; }
+      .brand-block { grid-template-columns: 1fr; gap: 10px; }
+      .brand-logo { width: min(190px, 58vw); }
+      .panel-head, .actions-row { align-items: stretch; flex-direction: column; }
+      .btn { width: 100%; }
+      .btn.icon { width: 100%; }
+      .order-list { max-height: none; }
+    }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="auth-gate" aria-label="Acesso ao sistema">
+    <div class="auth-card">
+      <img class="auth-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+      <h1 id="authTitle">Acesso</h1>
+      <p id="authDescription">Entre com seu usuário e senha para abrir o sistema.</p>
+      <form class="auth-form" id="authForm">
+        <div class="field">
+          <label for="authUsername">Usuário</label>
+          <input id="authUsername" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="authPassword">Senha</label>
+          <input id="authPassword" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field" id="confirmPasswordField" hidden>
+          <label for="authPasswordConfirm">Confirmar senha</label>
+          <input id="authPasswordConfirm" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn primary" id="authSubmitBtn" type="submit">Entrar</button>
+        <div class="auth-hint" id="authHint"></div>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <header>
+      <div class="brand-block">
+        <img class="brand-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+        <div>
+          <h1>Seam Rio Confecção</h1>
+          <p class="subtitle">Cadastro de clientes, pedidos, quantidades por tipo de peça, controle das etapas e geração automática de e-mails de acompanhamento.</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="newOrderBtn" type="button">+ Novo pedido</button>
+        <button class="btn" id="exportExcelBtn" type="button">Exportar Excel</button>
+        <button class="btn" id="exportPdfBtn" type="button">Exportar PDF</button>
+        <button class="btn" id="exportBtn" type="button">Backup JSON</button>
+        <label class="btn" for="importFile">Importar dados</label>
+        <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="btn" id="manageUsersBtn" type="button" hidden>Usuários</button>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="panel user-admin" id="userAdminPanel">
+      <div class="panel-head">
+        <h2>Administração de usuários</h2>
+        <span class="small">Somente administrador</span>
+      </div>
+      <div class="form-wrap">
+        <div class="grid-3">
+          <div class="field">
+            <label for="newUsername">Novo usuário</label>
+            <input id="newUsername" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="newUserPassword">Senha</label>
+            <input id="newUserPassword" type="password" autocomplete="new-password">
+          </div>
+          <div class="field">
+              <label for="newUserRole">Tipo</label>
+              <select id="newUserRole">
+                <option value="operador">Operador</option>
+                <option value="admin">Administrador</option>
+                <option value="cliente">Cliente</option>
+              </select>
+            </div>
+          </div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="field">
+            <label for="newUserClientName">Nome do cliente</label>
+            <input id="newUserClientName" autocomplete="off" placeholder="Obrigatório para usuário cliente">
+          </div>
+          <div class="field">
+            <label for="newUserClientEmail">E-mail do cliente</label>
+            <input id="newUserClientEmail" type="email" autocomplete="off" placeholder="Usado para filtrar pedidos">
+          </div>
+        </div>
+        <div class="actions-row">
+          <div class="left-actions">
+            <button class="btn primary" id="createUserBtn" type="button">Cadastrar usuário</button>
+          </div>
+        </div>
+        <div class="user-list" id="userList"></div>
+      </div>
+    </section>
+
+    <section class="summary-grid" id="summarySection" aria-label="Resumo da produção">
+      <div class="metric"><span>Pedidos ativos</span><strong id="activeCount">0</strong></div>
+      <div class="metric"><span>Peças em produção</span><strong id="piecesCount">0</strong></div>
+      <div class="metric"><span>Valor em aberto</span><strong id="openValue">R$ 0,00</strong></div>
+      <div class="metric"><span>Entregas próximas</span><strong id="dueSoon">0</strong></div>
+      <div class="metric"><span>Prazo mais urgente</span><strong id="urgentCountdown">--</strong></div>
+    </section>
+
+    <section class="panel chart-panel" id="chartSection">
+      <div class="panel-head">
+        <h2>Acompanhamento da produção</h2>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-swatch"></span>Pedidos</span>
+          <span class="legend-item"><span class="legend-swatch pieces"></span>Peças</span>
+        </div>
+      </div>
+      <div class="form-wrap">
+        <div class="production-chart" id="productionChart"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="clientRequestsPanel">
+      <div class="panel-head">
+        <h2>Mensagens dos clientes</h2>
+        <span class="small">Pedidos, mudanças e solicitações de interrupção</span>
+      </div>
+      <div class="form-wrap">
+        <div class="user-list" id="clientRequestList"></div>
+      </div>
+    </section>
+
+    <main id="managementMain">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Pedidos</h2>
+          <span class="small" id="listCount">0 cadastrados</span>
+        </div>
+        <div class="filters">
+          <div class="field">
+            <label for="searchInput">Buscar</label>
+            <input id="searchInput" type="search" placeholder="Cliente, pedido, telefone ou e-mail">
+          </div>
+          <div class="field">
+            <label for="stageFilter">Etapa</label>
+            <select id="stageFilter"></select>
+          </div>
+        </div>
+        <div class="order-list" id="orderList"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="formTitle">Novo pedido</h2>
+          <span class="pill" id="currentStageBadge">Pilotagem</span>
+        </div>
+        <form class="form-wrap" id="orderForm">
+          <section>
+            <h3 class="section-title">Cliente</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label for="clientName">Nome completo <span class="required">*</span></label>
+                <input id="clientName" required>
+              </div>
+              <div class="field">
+                <label for="clientEmail">E-mail <span class="required">*</span></label>
+                <input id="clientEmail" type="email" required>
+              </div>
+              <div class="field">
+                <label for="clientPhone">Telefone</label>
+                <input id="clientPhone" inputmode="tel">
+              </div>
+              <div class="field">
+                <label for="clientDocument">CPF/CNPJ</label>
+                <input id="clientDocument">
+              </div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="clientAddress">Endereço completo</label>
+              <textarea id="clientAddress" placeholder="Rua, número, bairro, cidade, UF, CEP"></textarea>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Pedido</h3>
+            <div class="grid-4">
+              <div class="field">
+                <label for="orderNumber">Número <span class="required">*</span></label>
+                <input id="orderNumber" required>
+              </div>
+              <div class="field">
+                <label for="orderDate">Data do pedido</label>
+                <input id="orderDate" type="date">
+              </div>
+              <div class="field">
+                <label for="startDate">Início dos trabalhos</label>
+                <input id="startDate" type="date">
+              </div>
+              <div class="field">
+                <label for="dueDate">Previsão de término</label>
+                <input id="dueDate" type="date">
+              </div>
+            </div>
+            <div class="grid-2" style="margin-top:10px">
+              <div class="field">
+                <label for="orderValue">Valor do pedido</label>
+                <input id="orderValue" type="number" min="0" step="0.01" placeholder="0,00">
+              </div>
+              <div class="field">
+                <label for="totalPieces">Peças totais</label>
+                <input id="totalPieces" type="number" min="0" step="1" readonly>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Contador de entrega</h3>
+            <div class="delivery-panel" id="deliveryPanel">
+              <div>
+                <strong id="deliveryCountdown">Sem previsão</strong>
+                <span id="deliveryCountdownDetail">Informe a previsão de término para acompanhar o prazo.</span>
+              </div>
+              <span class="pill" id="deliveryStatus">Prazo</span>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Quantidade por tipo</h3>
+            <div class="grid-3">
+              <div class="field">
+                <label for="qtyBottoms">Calcinhas</label>
+                <input id="qtyBottoms" class="qty" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="field">
+                <label for="qtyTops">Tops</label>
+                <input id="qtyTops" class="qty" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="field">
+                <label for="qtyCoverups">Saídas de praia</label>
+                <input id="qtyCoverups" class="qty" type="number" min="0" step="1" value="0">
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Nota fiscal de remessa de material</h3>
+            <div class="grid-4">
+              <div class="field">
+                <label for="remittanceInvoiceNumber">Número da NF</label>
+                <input id="remittanceInvoiceNumber">
+              </div>
+              <div class="field">
+                <label for="remittanceInvoiceDate">Data da NF</label>
+                <input id="remittanceInvoiceDate" type="date">
+              </div>
+              <div class="field">
+                <label for="remittanceInvoiceValue">Valor da NF</label>
+                <input id="remittanceInvoiceValue" type="number" min="0" step="0.01" placeholder="0,00">
+              </div>
+              <div class="field">
+                <label for="remittanceInvoiceSupplier">Emitente/remetente</label>
+                <input id="remittanceInvoiceSupplier">
+              </div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="remittanceInvoiceNotes">Observações da remessa</label>
+              <textarea id="remittanceInvoiceNotes" placeholder="Materiais enviados, volumes, transportadora, chave de acesso ou observações fiscais..."></textarea>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Nota fiscal de entrega e pagamento</h3>
+            <div class="grid-4">
+              <div class="field">
+                <label for="deliveryInvoiceNumber">Número da NF</label>
+                <input id="deliveryInvoiceNumber">
+              </div>
+              <div class="field">
+                <label for="deliveryInvoiceDate">Data da NF</label>
+                <input id="deliveryInvoiceDate" type="date">
+              </div>
+              <div class="field">
+                <label for="deliveryInvoiceValue">Valor da NF</label>
+                <input id="deliveryInvoiceValue" type="number" min="0" step="0.01" placeholder="0,00">
+              </div>
+              <div class="field">
+                <label for="paymentBaseDate">Data base</label>
+                <input id="paymentBaseDate" type="date">
+              </div>
+            </div>
+            <div class="grid-4" style="margin-top:10px">
+              <div class="field">
+                <label for="paymentType">Condição</label>
+                <select id="paymentType">
+                  <option value="avista">À vista</option>
+                  <option value="prazo">A prazo</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="paymentInstallments">Parcelas</label>
+                <select id="paymentInstallments">
+                  <option value="1">1 vez · 15 dias</option>
+                  <option value="2">2 vezes · 15 e 30 dias</option>
+                  <option value="3">3 vezes · 15, 30 e 45 dias</option>
+                  <option value="4">4 vezes · 15, 30, 45 e 60 dias</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="paymentMethod">Meio de pagamento</label>
+                <select id="paymentMethod">
+                  <option value="boleto">Boleto</option>
+                  <option value="pix">Pix</option>
+                  <option value="dinheiro">Dinheiro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="paymentStatus">Status</label>
+                <select id="paymentStatus">
+                  <option value="pendente">Pendente</option>
+                  <option value="parcial">Parcial</option>
+                  <option value="pago">Pago</option>
+                </select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="paymentSchedule">Datas de pagamento</label>
+              <textarea id="paymentSchedule" readonly></textarea>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label for="deliveryInvoiceNotes">Observações da entrega/pagamento</label>
+              <textarea id="deliveryInvoiceNotes" placeholder="Chave de acesso, boleto, comprovantes, observações financeiras ou fiscais..."></textarea>
+            </div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Etapas</h3>
+            <div class="field">
+              <label for="stageSelect">Etapa atual</label>
+              <select id="stageSelect"></select>
+            </div>
+            <div class="stage-strip" id="stageStrip"></div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Acompanhamento por e-mail</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label for="emailStage">Modelo</label>
+                <select id="emailStage"></select>
+              </div>
+              <div class="field">
+                <label for="emailMode">Envio</label>
+                <select id="emailMode">
+                  <option value="draft">Gerar rascunho no e-mail</option>
+                  <option value="copy">Copiar texto</option>
+                </select>
+              </div>
+            </div>
+            <div class="email-preview" id="emailPreview"></div>
+          </section>
+
+          <section>
+            <h3 class="section-title">Observações internas</h3>
+            <textarea id="notes" placeholder="Medidas, tecido, cores, detalhes de entrega, combinados com a cliente..."></textarea>
+          </section>
+
+          <div class="actions-row">
+            <div class="left-actions">
+              <button class="btn primary" type="submit">Salvar pedido</button>
+              <button class="btn" type="button" id="emailBtn">Enviar acompanhamento</button>
+            </div>
+            <div class="right-actions">
+              <button class="btn" type="button" id="duplicateBtn">Duplicar</button>
+              <button class="btn danger" type="button" id="deleteBtn">Excluir</button>
+            </div>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "gestao-biquinis-pedidos-v1";
+    const DB_NAME = "BiquinisProducaoDB";
+    const DB_VERSION = 3;
+    const ORDER_STORE = "orders";
+    const USER_STORE = "users";
+    const PRODUCT_STORE = "products";
+    const CLOUD_ORDER_TABLE = "orders";
+    const CLOUD_USER_TABLE = "app_users";
+    const CLOUD_PRODUCT_TABLE = "products";
+    const CLOUD_REQUEST_TABLE = "client_requests";
+    const stages = [
+      { id: "pilotagem", label: "Pilotagem" },
+      { id: "inicio-producao", label: "Início de produção" },
+      { id: "arremate", label: "Arremate" },
+      { id: "finalizacao", label: "Finalização" },
+      { id: "entrega", label: "Entrega" },
+      { id: "pagamento", label: "Pagamento" }
+    ];
+
+    const sampleOrders = [
+      {
+        id: crypto.randomUUID(),
+        clientName: "Marina Azevedo",
+        clientEmail: "marina@example.com",
+        clientPhone: "(11) 99999-0000",
+        clientDocument: "",
+        clientAddress: "Rua das Flores, 120 - São Paulo, SP",
+        orderNumber: "PED-001",
+        orderDate: today(),
+        startDate: today(),
+        dueDate: addDays(8),
+        orderValue: 1480,
+        qtyBottoms: 12,
+        qtyTops: 12,
+        qtyCoverups: 4,
+        remittanceInvoiceNumber: "",
+        remittanceInvoiceDate: "",
+        remittanceInvoiceValue: 0,
+        remittanceInvoiceSupplier: "",
+        remittanceInvoiceNotes: "",
+        deliveryInvoiceNumber: "",
+        deliveryInvoiceDate: "",
+        deliveryInvoiceValue: 1480,
+        paymentBaseDate: "",
+        paymentType: "prazo",
+        paymentInstallments: "2",
+        paymentMethod: "boleto",
+        paymentStatus: "pendente",
+        deliveryInvoiceNotes: "",
+        stage: "inicio-producao",
+        notes: "Coleção cápsula com cores sortidas.",
+        updatedAt: new Date().toISOString()
+      }
+    ];
+
+    let db = null;
+    let cloudDb = null;
+    let usingSupabase = false;
+    let orders = [];
+    let products = [];
+    let clientRequests = [];
+    let selectedId = null;
+    let currentUser = null;
+
+    const el = {
+      activeCount: document.querySelector("#activeCount"),
+      piecesCount: document.querySelector("#piecesCount"),
+      openValue: document.querySelector("#openValue"),
+      dueSoon: document.querySelector("#dueSoon"),
+      urgentCountdown: document.querySelector("#urgentCountdown"),
+      listCount: document.querySelector("#listCount"),
+      orderList: document.querySelector("#orderList"),
+      productionChart: document.querySelector("#productionChart"),
+      orderForm: document.querySelector("#orderForm"),
+      formTitle: document.querySelector("#formTitle"),
+      currentStageBadge: document.querySelector("#currentStageBadge"),
+      stageSelect: document.querySelector("#stageSelect"),
+      stageFilter: document.querySelector("#stageFilter"),
+      stageStrip: document.querySelector("#stageStrip"),
+      emailStage: document.querySelector("#emailStage"),
+      emailPreview: document.querySelector("#emailPreview"),
+      deliveryPanel: document.querySelector("#deliveryPanel"),
+      deliveryCountdown: document.querySelector("#deliveryCountdown"),
+      deliveryCountdownDetail: document.querySelector("#deliveryCountdownDetail"),
+      deliveryStatus: document.querySelector("#deliveryStatus"),
+      authTitle: document.querySelector("#authTitle"),
+      authDescription: document.querySelector("#authDescription"),
+      authForm: document.querySelector("#authForm"),
+      authUsername: document.querySelector("#authUsername"),
+      authPassword: document.querySelector("#authPassword"),
+      authPasswordConfirm: document.querySelector("#authPasswordConfirm"),
+      confirmPasswordField: document.querySelector("#confirmPasswordField"),
+      authSubmitBtn: document.querySelector("#authSubmitBtn"),
+      authHint: document.querySelector("#authHint"),
+      manageUsersBtn: document.querySelector("#manageUsersBtn"),
+      userAdminPanel: document.querySelector("#userAdminPanel"),
+      summarySection: document.querySelector("#summarySection"),
+      chartSection: document.querySelector("#chartSection"),
+      clientRequestsPanel: document.querySelector("#clientRequestsPanel"),
+      clientRequestList: document.querySelector("#clientRequestList"),
+      managementMain: document.querySelector("#managementMain"),
+      newUsername: document.querySelector("#newUsername"),
+      newUserPassword: document.querySelector("#newUserPassword"),
+      newUserRole: document.querySelector("#newUserRole"),
+      newUserClientName: document.querySelector("#newUserClientName"),
+      newUserClientEmail: document.querySelector("#newUserClientEmail"),
+      createUserBtn: document.querySelector("#createUserBtn"),
+      userList: document.querySelector("#userList"),
+      toast: document.querySelector("#toast")
+    };
+
+    const fields = [
+      "clientName", "clientEmail", "clientPhone", "clientDocument", "clientAddress",
+      "orderNumber", "orderDate", "startDate", "dueDate", "orderValue",
+      "qtyBottoms", "qtyTops", "qtyCoverups",
+      "remittanceInvoiceNumber", "remittanceInvoiceDate", "remittanceInvoiceValue", "remittanceInvoiceSupplier", "remittanceInvoiceNotes",
+      "deliveryInvoiceNumber", "deliveryInvoiceDate", "deliveryInvoiceValue", "paymentBaseDate", "paymentType", "paymentInstallments",
+      "paymentMethod", "paymentStatus", "deliveryInvoiceNotes", "notes"
+    ];
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) return false;
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      });
+      usingSupabase = true;
+      return true;
+    }
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = event => {
+          const database = event.target.result;
+          if (!database.objectStoreNames.contains(ORDER_STORE)) {
+            const store = database.createObjectStore(ORDER_STORE, { keyPath: "id" });
+            store.createIndex("orderNumber", "orderNumber", { unique: false });
+            store.createIndex("clientName", "clientName", { unique: false });
+            store.createIndex("dueDate", "dueDate", { unique: false });
+            store.createIndex("stage", "stage", { unique: false });
+          }
+          if (!database.objectStoreNames.contains(USER_STORE)) {
+            const userStore = database.createObjectStore(USER_STORE, { keyPath: "id" });
+            userStore.createIndex("username", "username", { unique: true });
+          }
+          if (!database.objectStoreNames.contains(PRODUCT_STORE)) {
+            const productStore = database.createObjectStore(PRODUCT_STORE, { keyPath: "id" });
+            productStore.createIndex("name", "name", { unique: false });
+            productStore.createIndex("type", "type", { unique: false });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function storeRequest(mode, callback) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(ORDER_STORE, mode);
+        const store = transaction.objectStore(ORDER_STORE);
+        const request = callback(store);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function userStoreRequest(mode, callback) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(USER_STORE, mode);
+        const store = transaction.objectStore(USER_STORE);
+        const request = callback(store);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function productStoreRequest(mode, callback) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(PRODUCT_STORE, mode);
+        const store = transaction.objectStore(PRODUCT_STORE);
+        const request = callback(store);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function transactionDone(transaction) {
+      return new Promise((resolve, reject) => {
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+      });
+    }
+
+    async function loadOrders() {
+      if (usingSupabase) {
+        const { data, error } = await cloudDb
+          .from(CLOUD_ORDER_TABLE)
+          .select("payload")
+          .order("updated_at", { ascending: false });
+        if (error) throw error;
+        return (data || []).map(row => row.payload).filter(Boolean);
+      }
+
+      const savedOrders = await storeRequest("readonly", store => store.getAll());
+      if (savedOrders.length) return savedOrders;
+
+      const migrated = readLegacyOrders();
+      const initialOrders = migrated.length ? migrated : sampleOrders;
+      await saveOrders(initialOrders);
+      return initialOrders;
+    }
+
+    function readLegacyOrders() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const parsed = saved ? JSON.parse(saved) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function saveOrders(nextOrders = orders) {
+      if (usingSupabase) {
+        const { error: deleteError } = await cloudDb
+          .from(CLOUD_ORDER_TABLE)
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+        if (deleteError) throw deleteError;
+
+        if (!nextOrders.length) return;
+        const rows = nextOrders.map(order => ({
+          id: order.id,
+          order_number: order.orderNumber || null,
+          client_name: order.clientName || null,
+          stage: order.stage || null,
+          due_date: order.dueDate || null,
+          updated_at: order.updatedAt || new Date().toISOString(),
+          payload: order
+        }));
+        const { error } = await cloudDb.from(CLOUD_ORDER_TABLE).insert(rows);
+        if (error) throw error;
+        return;
+      }
+
+      const transaction = db.transaction(ORDER_STORE, "readwrite");
+      const store = transaction.objectStore(ORDER_STORE);
+      store.clear();
+      nextOrders.forEach(order => store.put(order));
+      await transactionDone(transaction);
+    }
+
+    async function loadProducts() {
+      if (usingSupabase) {
+        const { data, error } = await cloudDb
+          .from(CLOUD_PRODUCT_TABLE)
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return (data || []).map(product => ({
+          id: product.id,
+          name: product.name,
+          type: product.type,
+          price: Number(product.price || 0),
+          code: product.code || "",
+          notes: product.notes || "",
+          createdAt: product.created_at
+        }));
+      }
+      return productStoreRequest("readonly", store => store.getAll());
+    }
+
+    async function saveProducts(nextProducts = products) {
+      if (usingSupabase) {
+        const { error: deleteError } = await cloudDb
+          .from(CLOUD_PRODUCT_TABLE)
+          .delete()
+          .neq("id", "00000000-0000-0000-0000-000000000000");
+        if (deleteError) throw deleteError;
+        if (!nextProducts.length) return;
+        const rows = nextProducts.map(product => ({
+          id: product.id,
+          name: product.name,
+          type: product.type,
+          price: Number(product.price || 0),
+          code: product.code || null,
+          notes: product.notes || null,
+          created_at: product.createdAt || new Date().toISOString()
+        }));
+        const { error } = await cloudDb.from(CLOUD_PRODUCT_TABLE).insert(rows);
+        if (error) throw error;
+        return;
+      }
+      const transaction = db.transaction(PRODUCT_STORE, "readwrite");
+      const store = transaction.objectStore(PRODUCT_STORE);
+      store.clear();
+      nextProducts.forEach(product => store.put(product));
+      await transactionDone(transaction);
+    }
+
+    async function loadClientRequests() {
+      if (!usingSupabase) return [];
+      const { data, error } = await cloudDb
+        .from(CLOUD_REQUEST_TABLE)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    }
+
+    async function updateClientRequestStatus(requestId, status) {
+      if (!usingSupabase) return;
+      const { error } = await cloudDb
+        .from(CLOUD_REQUEST_TABLE)
+        .update({ status })
+        .eq("id", requestId);
+      if (error) throw error;
+    }
+
+    async function getUsers() {
+      if (usingSupabase) {
+        const { data, error } = await cloudDb
+          .from(CLOUD_USER_TABLE)
+          .select("*")
+          .order("created_at", { ascending: true });
+        if (error) throw error;
+        return data || [];
+      }
+      return userStoreRequest("readonly", store => store.getAll());
+    }
+
+    async function getUserByUsername(username) {
+      if (usingSupabase) {
+        const cleanUsername = username.trim().toLowerCase();
+        const { data, error } = await cloudDb
+          .from(CLOUD_USER_TABLE)
+          .select("*")
+          .eq("username", cleanUsername)
+          .maybeSingle();
+        if (error) throw error;
+        return data;
+      }
+      return userStoreRequest("readonly", store => store.index("username").get(username.trim().toLowerCase()));
+    }
+
+    async function normalizeUserRoles() {
+      const users = await getUsers();
+      if (!users.length || users.every(user => user.role)) return users;
+      const normalized = users.map((user, index) => ({
+        ...user,
+        role: user.role || (index === 0 ? "admin" : "operador"),
+        clientName: user.clientName || user.client_name || "",
+        clientEmail: user.clientEmail || user.client_email || ""
+      }));
+      if (usingSupabase) {
+        const { error } = await cloudDb.from(CLOUD_USER_TABLE).upsert(normalized);
+        if (error) throw error;
+        return normalized;
+      }
+      const transaction = db.transaction(USER_STORE, "readwrite");
+      const store = transaction.objectStore(USER_STORE);
+      normalized.forEach(user => store.put(user));
+      await transactionDone(transaction);
+      return normalized;
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function createUser(username, password, role = "operador", clientName = "", clientEmail = "") {
+      const cleanUsername = username.trim().toLowerCase();
+      if (!cleanUsername) throw new Error("Informe o nome do usuário.");
+      const cleanClientEmail = clientEmail.trim().toLowerCase();
+      if (role === "cliente" && !cleanClientEmail) throw new Error("Informe o e-mail do cliente.");
+      const existing = await getUserByUsername(cleanUsername);
+      if (existing) throw new Error("Usuário já cadastrado.");
+      const salt = crypto.randomUUID();
+      const user = {
+        id: crypto.randomUUID(),
+        username: cleanUsername,
+        role,
+        clientName: clientName.trim(),
+        clientEmail: cleanClientEmail,
+        salt,
+        passwordHash: await hashPassword(password, salt),
+        createdAt: new Date().toISOString()
+      };
+      if (usingSupabase) {
+        const row = {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          client_name: user.clientName,
+          client_email: user.clientEmail,
+          salt: user.salt,
+          password_hash: user.passwordHash,
+          created_at: user.createdAt
+        };
+        const { error } = await cloudDb.from(CLOUD_USER_TABLE).insert(row);
+        if (error) throw error;
+        return {
+          id: row.id,
+          username: row.username,
+          role: row.role,
+          clientName: row.client_name || "",
+          clientEmail: row.client_email || "",
+          salt: row.salt,
+          passwordHash: row.password_hash,
+          createdAt: row.created_at
+        };
+      }
+      await userStoreRequest("readwrite", store => store.put(user));
+      return user;
+    }
+
+    async function deleteUser(userId) {
+      if (usingSupabase) {
+        const { error } = await cloudDb.from(CLOUD_USER_TABLE).delete().eq("id", userId);
+        if (error) throw error;
+        return;
+      }
+      await userStoreRequest("readwrite", store => store.delete(userId));
+    }
+
+    async function validateUser(username, password) {
+      const user = await getUserByUsername(username);
+      if (!user) return null;
+      const savedHash = user.passwordHash || user.password_hash;
+      const passwordHash = await hashPassword(password, user.salt);
+      if (passwordHash !== savedHash) return null;
+      if ((user.role || "operador") === "cliente") {
+        throw new Error("Cliente deve acessar pela página cliente.html.");
+      }
+      return {
+        id: user.id,
+        username: user.username,
+        role: user.role || "operador",
+        clientName: user.clientName || user.client_name || "",
+        clientEmail: user.clientEmail || user.client_email || "",
+        salt: user.salt,
+        passwordHash: savedHash,
+        createdAt: user.createdAt || user.created_at
+      };
+    }
+
+    async function unlockSystem(user) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      document.body.classList.remove("auth-locked");
+      orders = await loadOrders();
+      clientRequests = await loadClientRequests();
+      applyRoleView();
+      selectedId = orders[0]?.id || null;
+      fillForm(orders[0] || null);
+      renderAll();
+      showToast(`Bem-vindo, ${user.username}.`);
+    }
+
+    function applyRoleView() {
+      el.manageUsersBtn.hidden = currentUser?.role !== "admin";
+      el.userAdminPanel.classList.remove("show");
+      el.summarySection.hidden = false;
+      el.chartSection.hidden = false;
+      el.managementMain.hidden = false;
+      document.querySelector("#newOrderBtn").hidden = false;
+      document.querySelector("#exportExcelBtn").hidden = false;
+      document.querySelector("#exportPdfBtn").hidden = false;
+      document.querySelector("#exportBtn").hidden = false;
+      document.querySelector('label[for="importFile"]').hidden = false;
+    }
+
+    async function renderUserList() {
+      if (!currentUser || currentUser.role !== "admin") return;
+      const users = await getUsers();
+      el.userList.innerHTML = users.map(user => `
+        <div class="user-row">
+          <div>
+            <strong>${escapeHtml(user.username)}</strong>
+            <div class="small">${user.role === "admin" ? "Administrador" : user.role === "cliente" ? "Cliente" : "Operador"} · criado em ${user.createdAt || user.created_at ? new Date(user.createdAt || user.created_at).toLocaleDateString("pt-BR") : "sem data"}</div>
+            ${user.role === "cliente" ? `<div class="small">${escapeHtml(user.clientName || user.client_name || "")} · ${escapeHtml(user.clientEmail || user.client_email || "")}</div>` : ""}
+          </div>
+          <div class="user-actions">
+            <span class="pill ${user.role === "admin" ? "done" : ""}">${user.role === "admin" ? "Admin" : user.role === "cliente" ? "Cliente" : "Operador"}</span>
+            <button class="btn danger" type="button" data-delete-user="${user.id}">Excluir</button>
+          </div>
+        </div>
+      `).join("");
+
+      el.userList.querySelectorAll("[data-delete-user]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const userId = button.dataset.deleteUser;
+          const usersNow = await getUsers();
+          const userToDelete = usersNow.find(user => user.id === userId);
+          if (!userToDelete) return;
+          if (userToDelete.id === currentUser.id || userToDelete.username === currentUser.username) {
+            showToast("Você não pode excluir o usuário que está logado.");
+            return;
+          }
+          const adminCount = usersNow.filter(user => user.role === "admin").length;
+          if (userToDelete.role === "admin" && adminCount <= 1) {
+            showToast("Não é possível excluir o último administrador.");
+            return;
+          }
+          if (!confirm(`Excluir o usuário ${userToDelete.username}?`)) return;
+          try {
+            await deleteUser(userId);
+            await renderUserList();
+            showToast("Usuário excluído.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível excluir o usuário.");
+          }
+        });
+      });
+    }
+
+    async function setupAuth() {
+      const users = await normalizeUserRoles();
+      const isFirstAccess = users.length === 0;
+      el.authTitle.textContent = isFirstAccess ? "Criar acesso" : "Acesso";
+      el.authDescription.textContent = isFirstAccess
+        ? "Cadastre o primeiro usuário e senha para proteger o sistema."
+        : "Entre com seu usuário e senha para abrir o sistema.";
+      el.authSubmitBtn.textContent = isFirstAccess ? "Criar usuário" : "Entrar";
+      el.confirmPasswordField.hidden = !isFirstAccess;
+      el.authPassword.autocomplete = isFirstAccess ? "new-password" : "current-password";
+      el.authHint.textContent = isFirstAccess
+        ? `Guarde essa senha. Ela será necessária para abrir o sistema ${usingSupabase ? "online." : "neste navegador."}`
+        : usingSupabase ? "Modo online: dados salvos no Supabase." : "Os dados continuam salvos no banco local deste navegador.";
+
+      el.authForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        try {
+          const username = el.authUsername.value;
+          const password = el.authPassword.value;
+          if (isFirstAccess) {
+            if (password.length < 4) throw new Error("Use uma senha com pelo menos 4 caracteres.");
+            if (password !== el.authPasswordConfirm.value) throw new Error("As senhas não conferem.");
+            const user = await createUser(username, password, "admin");
+            await unlockSystem(user);
+            return;
+          }
+          const user = await validateUser(username, password);
+          if (!user) throw new Error("Usuário ou senha inválidos.");
+          await unlockSystem(user);
+        } catch (error) {
+          showToast(error.message || "Não foi possível autenticar.");
+        }
+      });
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function addDays(days) {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      return date.toISOString().slice(0, 10);
+    }
+
+    function addDaysToDate(value, days) {
+      const date = value ? new Date(value + "T00:00:00") : new Date();
+      date.setDate(date.getDate() + days);
+      return date.toISOString().slice(0, 10);
+    }
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sem data";
+      return new Date(value + "T00:00:00").toLocaleDateString("pt-BR");
+    }
+
+    function paymentDueOffsets(order) {
+      if (order.paymentType === "avista") return [0];
+      const installments = Math.min(Math.max(Number(order.paymentInstallments || 1), 1), 4);
+      return Array.from({ length: installments }, (_, index) => (index + 1) * 15);
+    }
+
+    function buildPaymentSchedule(order) {
+      const amount = Number(order.deliveryInvoiceValue || order.orderValue || 0);
+      const offsets = paymentDueOffsets(order);
+      const installmentValue = offsets.length ? amount / offsets.length : amount;
+      const baseDate = order.paymentBaseDate || order.deliveryInvoiceDate || order.dueDate || today();
+      const methodLabel = {
+        boleto: "Boleto",
+        pix: "Pix",
+        dinheiro: "Dinheiro"
+      }[order.paymentMethod] || "Pagamento";
+
+      return offsets.map((offset, index) => {
+        const dueDate = addDaysToDate(baseDate, offset);
+        const dueLabel = offset === 0 ? "à vista" : `${offset} dias`;
+        return `${index + 1}/${offsets.length} - ${formatDate(dueDate)} (${dueLabel}) - ${formatMoney(installmentValue)} - ${methodLabel}`;
+      }).join("\n");
+    }
+
+    function renderPaymentSchedule() {
+      const output = document.querySelector("#paymentSchedule");
+      if (!output) return;
+      output.value = buildPaymentSchedule(orderFromForm());
+    }
+
+    function updatePaymentControls() {
+      const paymentType = document.querySelector("#paymentType");
+      const installments = document.querySelector("#paymentInstallments");
+      if (!paymentType || !installments) return;
+      const isCash = paymentType.value === "avista";
+      installments.disabled = isCash;
+      if (isCash) installments.value = "1";
+      renderPaymentSchedule();
+    }
+
+    function deliveryInfo(order) {
+      if (order.stage === "entrega" || order.stage === "pagamento") {
+        return {
+          text: "Entregue",
+          detail: order.stage === "pagamento" ? "Pedido entregue e em etapa de pagamento." : "Pedido marcado como entregue.",
+          status: order.stage === "pagamento" ? "Pagamento" : "Concluído",
+          className: "done",
+          urgentValue: Infinity
+        };
+      }
+
+      if (!order.dueDate) {
+        return {
+          text: "Sem previsão",
+          detail: "Informe a previsão de término para acompanhar o prazo.",
+          status: "Prazo",
+          className: "",
+          urgentValue: Infinity
+        };
+      }
+
+      const target = new Date(order.dueDate + "T23:59:59");
+      const now = new Date();
+      const diffMs = target - now;
+      const absMs = Math.abs(diffMs);
+      const dayMs = 24 * 60 * 60 * 1000;
+      const hourMs = 60 * 60 * 1000;
+      const days = Math.ceil(absMs / dayMs);
+      const hours = Math.ceil(absMs / hourMs);
+
+      if (diffMs < 0) {
+        return {
+          text: days <= 1 ? "Atrasado há 1 dia" : `Atrasado há ${days} dias`,
+          detail: `Previsão era ${formatDate(order.dueDate)}.`,
+          status: "Atrasado",
+          className: "late",
+          urgentValue: diffMs
+        };
+      }
+
+      if (hours <= 24) {
+        return {
+          text: hours <= 1 ? "Menos de 1 hora" : `${hours} horas restantes`,
+          detail: `Entrega prevista para hoje, ${formatDate(order.dueDate)}.`,
+          status: "Vence hoje",
+          className: "soon",
+          urgentValue: diffMs
+        };
+      }
+
+      if (hours <= 48) {
+        return {
+          text: "1 dia restante",
+          detail: `Entrega prevista para ${formatDate(order.dueDate)}.`,
+          status: "Próximo",
+          className: "soon",
+          urgentValue: diffMs
+        };
+      }
+
+      return {
+        text: `${days} dias restantes`,
+        detail: `Entrega prevista para ${formatDate(order.dueDate)}.`,
+        status: days <= 7 ? "Próximo" : "No prazo",
+        className: days <= 7 ? "soon" : "",
+        urgentValue: diffMs
+      };
+    }
+
+    function renderDeliveryCountdown() {
+      const info = deliveryInfo(orderFromForm());
+      el.deliveryPanel.className = `delivery-panel ${info.className}`.trim();
+      el.deliveryCountdown.textContent = info.text;
+      el.deliveryCountdownDetail.textContent = info.detail;
+      el.deliveryStatus.textContent = info.status;
+    }
+
+    function totalPieces(order) {
+      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0);
+    }
+
+    function stageIndex(stageId) {
+      return Math.max(0, stages.findIndex(stage => stage.id === stageId));
+    }
+
+    function stageLabel(stageId) {
+      return stages.find(stage => stage.id === stageId)?.label || stages[0].label;
+    }
+
+    function renderOptions() {
+      const stageOptions = stages.map(stage => `<option value="${stage.id}">${stage.label}</option>`).join("");
+      el.stageSelect.innerHTML = stageOptions;
+      el.emailStage.innerHTML = stageOptions;
+      el.stageFilter.innerHTML = `<option value="all">Todas</option>${stageOptions}`;
+    }
+
+    function orderFromForm() {
+      const data = {};
+      fields.forEach(id => {
+        const input = document.querySelector("#" + id);
+        data[id] = input.type === "number" ? Number(input.value || 0) : input.value.trim();
+      });
+      data.stage = el.stageSelect.value;
+      data.totalPieces = totalPieces(data);
+      data.paymentSchedule = buildPaymentSchedule(data);
+      data.id = selectedId || crypto.randomUUID();
+      data.updatedAt = new Date().toISOString();
+      return data;
+    }
+
+    function fillForm(order) {
+      selectedId = order?.id || null;
+      document.querySelector("#clientName").value = order?.clientName || "";
+      document.querySelector("#clientEmail").value = order?.clientEmail || "";
+      document.querySelector("#clientPhone").value = order?.clientPhone || "";
+      document.querySelector("#clientDocument").value = order?.clientDocument || "";
+      document.querySelector("#clientAddress").value = order?.clientAddress || "";
+      document.querySelector("#orderNumber").value = order?.orderNumber || nextOrderNumber();
+      document.querySelector("#orderDate").value = order?.orderDate || today();
+      document.querySelector("#startDate").value = order?.startDate || "";
+      document.querySelector("#dueDate").value = order?.dueDate || "";
+      document.querySelector("#orderValue").value = order?.orderValue || "";
+      document.querySelector("#qtyBottoms").value = order?.qtyBottoms || 0;
+      document.querySelector("#qtyTops").value = order?.qtyTops || 0;
+      document.querySelector("#qtyCoverups").value = order?.qtyCoverups || 0;
+      document.querySelector("#remittanceInvoiceNumber").value = order?.remittanceInvoiceNumber || "";
+      document.querySelector("#remittanceInvoiceDate").value = order?.remittanceInvoiceDate || "";
+      document.querySelector("#remittanceInvoiceValue").value = order?.remittanceInvoiceValue || "";
+      document.querySelector("#remittanceInvoiceSupplier").value = order?.remittanceInvoiceSupplier || "";
+      document.querySelector("#remittanceInvoiceNotes").value = order?.remittanceInvoiceNotes || "";
+      document.querySelector("#deliveryInvoiceNumber").value = order?.deliveryInvoiceNumber || "";
+      document.querySelector("#deliveryInvoiceDate").value = order?.deliveryInvoiceDate || "";
+      document.querySelector("#deliveryInvoiceValue").value = order?.deliveryInvoiceValue || order?.orderValue || "";
+      document.querySelector("#paymentBaseDate").value = order?.paymentBaseDate || order?.deliveryInvoiceDate || "";
+      document.querySelector("#paymentType").value = order?.paymentType || "avista";
+      document.querySelector("#paymentInstallments").value = String(order?.paymentInstallments || "1");
+      document.querySelector("#paymentMethod").value = order?.paymentMethod || "boleto";
+      document.querySelector("#paymentStatus").value = order?.paymentStatus || "pendente";
+      document.querySelector("#deliveryInvoiceNotes").value = order?.deliveryInvoiceNotes || "";
+      el.stageSelect.value = order?.stage || "pilotagem";
+      el.emailStage.value = order?.stage || "pilotagem";
+      document.querySelector("#notes").value = order?.notes || "";
+      el.formTitle.textContent = order ? `Pedido ${order.orderNumber}` : "Novo pedido";
+      updateTotalPieces();
+      updatePaymentControls();
+      renderPaymentSchedule();
+      renderStageStrip();
+      renderDeliveryCountdown();
+      renderEmailPreview();
+      renderClientArea();
+    }
+
+    function nextOrderNumber() {
+      const next = orders.length + 1;
+      return `PED-${String(next).padStart(3, "0")}`;
+    }
+
+    function renderList() {
+      const term = document.querySelector("#searchInput").value.toLowerCase();
+      const filter = document.querySelector("#stageFilter").value;
+      const filtered = orders
+        .filter(order => filter === "all" || order.stage === filter)
+        .filter(order => [
+          order.clientName,
+          order.clientEmail,
+          order.clientPhone,
+          order.orderNumber,
+          order.remittanceInvoiceNumber,
+          order.deliveryInvoiceNumber
+        ].join(" ").toLowerCase().includes(term))
+        .sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+
+      el.listCount.textContent = `${orders.length} cadastrado${orders.length === 1 ? "" : "s"}`;
+      if (!filtered.length) {
+        el.orderList.innerHTML = `<div class="empty">Nenhum pedido encontrado.</div>`;
+        return;
+      }
+
+      el.orderList.innerHTML = filtered.map(order => {
+        const isFinished = order.stage === "entrega" || order.stage === "pagamento";
+        const isLate = order.dueDate && !isFinished && new Date(order.dueDate + "T23:59:59") < new Date();
+        const badgeClass = isFinished ? "done" : isLate ? "late" : "";
+        const countdown = deliveryInfo(order);
+        return `
+          <button class="order-card ${order.id === selectedId ? "active" : ""}" type="button" data-id="${order.id}">
+            <div class="order-top">
+              <div>
+                <div class="order-title">${escapeHtml(order.orderNumber)} · ${escapeHtml(order.clientName)}</div>
+                <div class="small">${escapeHtml(order.clientEmail || "")} ${order.clientPhone ? "· " + escapeHtml(order.clientPhone) : ""}</div>
+              </div>
+              <span class="pill ${badgeClass}">${stageLabel(order.stage)}</span>
+            </div>
+            <div class="mini-stats">
+              <span><strong>${totalPieces(order)}</strong> peças</span>
+              <span><strong>${escapeHtml(countdown.text)}</strong> prazo</span>
+              <span><strong>${formatMoney(order.orderValue)}</strong> valor</span>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      el.orderList.querySelectorAll(".order-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const order = orders.find(item => item.id === card.dataset.id);
+          fillForm(order);
+          renderAll();
+        });
+      });
+    }
+
+    function productTypeLabel(type) {
+      return {
+        top: "Top",
+        calcinha: "Calcinha",
+        saida: "Saída de praia",
+        conjunto: "Conjunto"
+      }[type] || "Produto";
+    }
+
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function renderClientArea() {
+      renderProductList();
+      renderProductOptions();
+      renderClientOrderList();
+      updateClientOrderValue();
+    }
+
+    function renderProductList() {
+      if (!products.length) {
+        el.productList.innerHTML = `<div class="empty">Nenhum produto cadastrado.</div>`;
+        return;
+      }
+      el.productList.innerHTML = products.map(product => `
+        <div class="user-row">
+          <div>
+            <strong>${escapeHtml(product.name)}</strong>
+            <div class="small">${productTypeLabel(product.type)}${product.code ? " · " + escapeHtml(product.code) : ""} · ${formatMoney(product.price)}</div>
+            ${product.notes ? `<div class="small">${escapeHtml(product.notes)}</div>` : ""}
+          </div>
+          <div class="user-actions">
+            <button class="btn danger" type="button" data-delete-product="${product.id}">Excluir</button>
+          </div>
+        </div>
+      `).join("");
+      el.productList.querySelectorAll("[data-delete-product]").forEach(button => {
+        button.addEventListener("click", async () => {
+          if (!confirm("Excluir este produto?")) return;
+          products = products.filter(product => product.id !== button.dataset.deleteProduct);
+          await saveProducts();
+          renderClientArea();
+          showToast("Produto excluído.");
+        });
+      });
+    }
+
+    function renderProductOptions() {
+      if (!products.length) {
+        el.clientOrderProduct.innerHTML = `<option value="">Cadastre um produto primeiro</option>`;
+        return;
+      }
+      el.clientOrderProduct.innerHTML = products.map(product => (
+        `<option value="${product.id}">${escapeHtml(product.name)} · ${productTypeLabel(product.type)} · ${formatMoney(product.price)}</option>`
+      )).join("");
+    }
+
+    function selectedClientProduct() {
+      return products.find(product => product.id === el.clientOrderProduct.value) || products[0] || null;
+    }
+
+    function updateClientOrderValue() {
+      const product = selectedClientProduct();
+      const quantity = Number(el.clientOrderQuantity.value || 1);
+      el.clientOrderValue.value = product ? (Number(product.price || 0) * quantity).toFixed(2) : "";
+    }
+
+    function orderQuantitiesFromProduct(product, quantity) {
+      const quantities = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0 };
+      if (!product) return quantities;
+      if (product.type === "top") quantities.qtyTops = quantity;
+      if (product.type === "calcinha") quantities.qtyBottoms = quantity;
+      if (product.type === "saida") quantities.qtyCoverups = quantity;
+      if (product.type === "conjunto") {
+        quantities.qtyTops = quantity;
+        quantities.qtyBottoms = quantity;
+      }
+      return quantities;
+    }
+
+    function renderClientOrderList() {
+      const clientOrders = orders.filter(order => order.source === "cliente" || order.productId);
+      if (!clientOrders.length) {
+        el.clientOrderList.innerHTML = `<div class="empty">Nenhum pedido criado pela área do cliente.</div>`;
+        return;
+      }
+      el.clientOrderList.innerHTML = clientOrders
+        .slice()
+        .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))
+        .map(order => {
+          const status = deliveryInfo(order);
+          return `
+            <div class="user-row">
+              <div>
+                <strong>${escapeHtml(order.orderNumber)} · ${escapeHtml(order.clientName)}</strong>
+                <div class="small">${stageLabel(order.stage)} · ${status.text} · ${formatMoney(order.orderValue)}</div>
+                <div class="small">${escapeHtml(order.productName || "Produto não informado")} · ${totalPieces(order)} peça${totalPieces(order) === 1 ? "" : "s"}</div>
+              </div>
+              <span class="pill ${order.stage === "pagamento" ? "done" : ""}">${stageLabel(order.stage)}</span>
+            </div>
+          `;
+        }).join("");
+    }
+
+    function renderSummary() {
+      const active = orders.filter(order => order.stage !== "pagamento");
+      const soonLimit = new Date();
+      soonLimit.setDate(soonLimit.getDate() + 7);
+      el.activeCount.textContent = active.length;
+      el.piecesCount.textContent = active.reduce((sum, order) => sum + totalPieces(order), 0);
+      el.openValue.textContent = formatMoney(active.reduce((sum, order) => sum + Number(order.orderValue || 0), 0));
+      el.dueSoon.textContent = active.filter(order => order.dueDate && new Date(order.dueDate + "T00:00:00") <= soonLimit).length;
+      const urgent = active
+        .map(order => ({ order, info: deliveryInfo(order) }))
+        .filter(item => Number.isFinite(item.info.urgentValue))
+        .sort((a, b) => a.info.urgentValue - b.info.urgentValue)[0];
+      el.urgentCountdown.textContent = urgent ? urgent.info.text : "--";
+    }
+
+    function requestTypeLabel(type) {
+      return {
+        novo_pedido: "Novo pedido",
+        mensagem: "Mensagem",
+        interromper: "Interromper produção",
+        mudanca: "Mudança no produto"
+      }[type] || "Solicitação";
+    }
+
+    function renderClientRequests() {
+      if (!usingSupabase) {
+        el.clientRequestList.innerHTML = `<div class="empty">Mensagens de clientes ficam disponíveis na versão online com Supabase.</div>`;
+        return;
+      }
+
+      if (!clientRequests.length) {
+        el.clientRequestList.innerHTML = `<div class="empty">Nenhuma mensagem de cliente recebida.</div>`;
+        return;
+      }
+
+      el.clientRequestList.innerHTML = clientRequests.map(request => `
+        <div class="user-row">
+          <div>
+            <strong>${requestTypeLabel(request.type)} · ${escapeHtml(request.order_number || "Sem pedido")}</strong>
+            <div class="small">${escapeHtml(request.client_name || "")} · ${escapeHtml(request.client_email || "")} · ${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
+            <div class="small">${escapeHtml(request.message || "")}</div>
+          </div>
+          <div class="user-actions">
+            <span class="pill ${request.status === "resolvido" ? "done" : request.type === "interromper" ? "late" : ""}">${request.status || "pendente"}</span>
+            ${request.status === "resolvido" ? "" : `<button class="btn" type="button" data-resolve-request="${request.id}">Resolver</button>`}
+          </div>
+        </div>
+      `).join("");
+
+      el.clientRequestList.querySelectorAll("[data-resolve-request]").forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            await updateClientRequestStatus(button.dataset.resolveRequest, "resolvido");
+            clientRequests = await loadClientRequests();
+            renderClientRequests();
+            showToast("Solicitação marcada como resolvida.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível atualizar a solicitação.");
+          }
+        });
+      });
+    }
+
+    function renderProductionChart() {
+      const totals = stages.map(stage => {
+        const stageOrders = orders.filter(order => order.stage === stage.id);
+        return {
+          ...stage,
+          orders: stageOrders.length,
+          pieces: stageOrders.reduce((sum, order) => sum + totalPieces(order), 0)
+        };
+      });
+      const maxOrders = Math.max(1, ...totals.map(item => item.orders));
+      const maxPieces = Math.max(1, ...totals.map(item => item.pieces));
+
+      el.productionChart.innerHTML = totals.map(item => {
+        const orderWidth = Math.max(item.orders ? 4 : 0, (item.orders / maxOrders) * 100);
+        const pieceWidth = Math.max(item.pieces ? 4 : 0, (item.pieces / maxPieces) * 100);
+        return `
+          <div class="chart-row">
+            <div class="chart-label">${escapeHtml(item.label)}</div>
+            <div class="chart-track" aria-label="${escapeHtml(item.label)}: ${item.orders} pedidos e ${item.pieces} peças">
+              <div class="chart-bar orders" style="width:${orderWidth}%"></div>
+              <div class="chart-bar pieces" style="width:${pieceWidth}%"></div>
+            </div>
+            <div class="chart-values">
+              <strong>${item.orders}</strong> pedido${item.orders === 1 ? "" : "s"}<br>
+              <strong>${item.pieces}</strong> peça${item.pieces === 1 ? "" : "s"}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderStageStrip() {
+      const current = el.stageSelect.value || "pilotagem";
+      el.currentStageBadge.textContent = stageLabel(current);
+      const currentIndex = stageIndex(current);
+      el.stageStrip.innerHTML = stages.map((stage, index) => {
+        const state = index < currentIndex ? "complete" : index === currentIndex ? "current" : "";
+        return `
+          <button class="stage-btn ${state}" type="button" data-stage="${stage.id}">
+            <strong>${stage.label}</strong>
+            <span>${index < currentIndex ? "Concluída" : index === currentIndex ? "Atual" : "Pendente"}</span>
+          </button>
+        `;
+      }).join("");
+      el.stageStrip.querySelectorAll(".stage-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          el.stageSelect.value = button.dataset.stage;
+          document.querySelector("#emailStage").value = button.dataset.stage;
+          renderStageStrip();
+          renderDeliveryCountdown();
+          renderEmailPreview();
+        });
+      });
+    }
+
+    function emailTemplate(order, stageId) {
+      const client = order.clientName || "cliente";
+      const pieces = totalPieces(order);
+      const piecesText = `${pieces} peça${pieces === 1 ? "" : "s"} (${order.qtyBottoms || 0} calcinha${Number(order.qtyBottoms) === 1 ? "" : "s"}, ${order.qtyTops || 0} top${Number(order.qtyTops) === 1 ? "" : "s"} e ${order.qtyCoverups || 0} saída${Number(order.qtyCoverups) === 1 ? "" : "s"} de praia)`;
+      const subject = `Atualização do pedido ${order.orderNumber || ""} - ${stageLabel(stageId)}`;
+      const invoiceLine = order.deliveryInvoiceNumber ? `\nNota fiscal de entrega: ${order.deliveryInvoiceNumber}.` : "";
+      const paymentLine = order.paymentSchedule ? `\n\nPagamentos previstos:\n${order.paymentSchedule}` : "";
+      const messages = {
+        "pilotagem": `Olá, ${client}!\n\nEstamos na etapa de pilotagem do seu pedido ${order.orderNumber}. Neste momento conferimos modelagem, medidas e detalhes antes de iniciar a produção.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.\n\nQualquer ajuste combinado será registrado antes da próxima fase.`,
+        "inicio-producao": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} entrou em produção. A equipe já iniciou os trabalhos conforme os detalhes aprovados.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.\n\nSeguiremos acompanhando e avisaremos quando avançar para arremate.`,
+        "arremate": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} chegou à etapa de arremate. Agora estamos cuidando dos acabamentos, revisão de costura e conferência das peças.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.`,
+        "finalizacao": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} está em finalização. Estamos fazendo a última conferência, organização e preparo para entrega.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.`,
+        "entrega": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} foi finalizado e está pronto para entrega.\n\nResumo: ${piecesText}.\nValor do pedido: ${formatMoney(order.orderValue)}.${invoiceLine}${paymentLine}\n\nObrigada pela confiança!`,
+        "pagamento": `Olá, ${client}!\n\nSegue acompanhamento de pagamento referente ao pedido ${order.orderNumber}.${invoiceLine}\n\nValor da nota/pedido: ${formatMoney(order.deliveryInvoiceValue || order.orderValue)}.\nCondição: ${order.paymentType === "avista" ? "à vista" : "a prazo"}.\nMeio de pagamento: ${order.paymentMethod || "não informado"}.\nStatus: ${order.paymentStatus || "pendente"}.${paymentLine}\n\nFicamos à disposição para qualquer ajuste ou envio de comprovante.`
+      };
+      return { subject, body: messages[stageId] || messages.pilotagem };
+    }
+
+    function renderEmailPreview() {
+      const order = orderFromForm();
+      const stageId = document.querySelector("#emailStage").value || order.stage || "pilotagem";
+      const email = emailTemplate(order, stageId);
+      el.emailPreview.textContent = `Assunto: ${email.subject}\n\n${email.body}`;
+    }
+
+    function updateTotalPieces() {
+      const data = orderFromForm();
+      document.querySelector("#totalPieces").value = totalPieces(data);
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderProductionChart();
+      renderClientRequests();
+      renderList();
+      renderStageStrip();
+      renderDeliveryCountdown();
+      renderEmailPreview();
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 2600);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function databaseRows() {
+      return orders.map(order => ({
+        "Pedido": order.orderNumber || "",
+        "Etapa": stageLabel(order.stage),
+        "Cliente": order.clientName || "",
+        "E-mail": order.clientEmail || "",
+        "Telefone": order.clientPhone || "",
+        "CPF/CNPJ": order.clientDocument || "",
+        "Endereço": order.clientAddress || "",
+        "Data do pedido": formatDate(order.orderDate),
+        "Início dos trabalhos": formatDate(order.startDate),
+        "Previsão de término": formatDate(order.dueDate),
+        "Contador de entrega": deliveryInfo(order).text,
+        "Valor do pedido": Number(order.orderValue || 0),
+        "Peças totais": totalPieces(order),
+        "Calcinhas": Number(order.qtyBottoms || 0),
+        "Tops": Number(order.qtyTops || 0),
+        "Saídas de praia": Number(order.qtyCoverups || 0),
+        "NF remessa - número": order.remittanceInvoiceNumber || "",
+        "NF remessa - data": formatDate(order.remittanceInvoiceDate),
+        "NF remessa - valor": Number(order.remittanceInvoiceValue || 0),
+        "NF remessa - emitente/remetente": order.remittanceInvoiceSupplier || "",
+        "NF remessa - observações": order.remittanceInvoiceNotes || "",
+        "NF entrega - número": order.deliveryInvoiceNumber || "",
+        "NF entrega - data": formatDate(order.deliveryInvoiceDate),
+        "NF entrega - valor": Number(order.deliveryInvoiceValue || 0),
+        "Pagamento - data base": formatDate(order.paymentBaseDate),
+        "Pagamento - condição": order.paymentType === "avista" ? "À vista" : "A prazo",
+        "Pagamento - parcelas": order.paymentType === "avista" ? "1" : String(order.paymentInstallments || "1"),
+        "Pagamento - meio": order.paymentMethod || "",
+        "Pagamento - status": order.paymentStatus || "",
+        "Pagamento - datas": order.paymentSchedule || buildPaymentSchedule(order),
+        "NF entrega/pagamento - observações": order.deliveryInvoiceNotes || "",
+        "Observações internas": order.notes || "",
+        "Atualizado em": order.updatedAt ? new Date(order.updatedAt).toLocaleString("pt-BR") : ""
+      }));
+    }
+
+    function downloadBlob(content, type, filename) {
+      const blob = new Blob([content], { type });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    function exportExcel() {
+      const rows = databaseRows();
+      if (!rows.length) {
+        showToast("Não há pedidos para exportar.");
+        return;
+      }
+      const columns = Object.keys(rows[0]);
+      const table = `
+        <table>
+          <thead><tr>${columns.map(column => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${columns.map(column => `<td>${escapeHtml(row[column]).replace(/\n/g, "<br>")}</td>`).join("")}</tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+      const workbook = `
+        <!doctype html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            table { border-collapse: collapse; }
+            th, td { border: 1px solid #9aa6b2; padding: 6px; vertical-align: top; mso-number-format:"\\@"; }
+            th { background: #dcebf0; font-weight: bold; }
+          </style>
+        </head>
+        <body>${table}</body>
+        </html>
+      `;
+      downloadBlob("\ufeff" + workbook, "application/vnd.ms-excel;charset=utf-8", `banco-pedidos-seam-rio-${today()}.xls`);
+      showToast("Planilha Excel exportada.");
+    }
+
+    function exportPdf() {
+      const rows = databaseRows();
+      if (!rows.length) {
+        showToast("Não há pedidos para exportar.");
+        return;
+      }
+      const columns = [
+        "Pedido", "Etapa", "Cliente", "Data do pedido", "Previsão de término",
+        "Contador de entrega", "Valor do pedido", "Peças totais",
+        "NF entrega - número", "Pagamento - condição", "Pagamento - meio",
+        "Pagamento - status", "Pagamento - datas"
+      ];
+      const tableRows = rows.map(row => `
+        <tr>${columns.map(column => {
+          const value = column.includes("Valor") ? formatMoney(row[column]) : row[column];
+          return `<td>${escapeHtml(value).replace(/\n/g, "<br>")}</td>`;
+        }).join("")}</tr>
+      `).join("");
+      const totalValue = orders.reduce((sum, order) => sum + Number(order.orderValue || 0), 0);
+      const report = `
+        <!doctype html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8">
+          <title>Relatório Seam Rio Confecção</title>
+          <style>
+            @page { size: A4 landscape; margin: 12mm; }
+            body { font-family: Arial, sans-serif; color: #1f2933; }
+            h1 { margin: 0 0 4px; font-size: 22px; }
+            .meta { color: #667085; margin-bottom: 16px; font-size: 12px; }
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+            .box { border: 1px solid #d9e1e7; padding: 8px; border-radius: 6px; }
+            .box span { display: block; color: #667085; font-size: 11px; }
+            .box strong { font-size: 16px; }
+            table { border-collapse: collapse; width: 100%; font-size: 10px; }
+            th, td { border: 1px solid #cfd8df; padding: 5px; vertical-align: top; }
+            th { background: #e8f1f3; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>Seam Rio Confecção</h1>
+          <div class="meta">Relatório de pedidos gerado em ${new Date().toLocaleString("pt-BR")}</div>
+          <div class="summary">
+            <div class="box"><span>Pedidos</span><strong>${orders.length}</strong></div>
+            <div class="box"><span>Peças totais</span><strong>${orders.reduce((sum, order) => sum + totalPieces(order), 0)}</strong></div>
+            <div class="box"><span>Valor total</span><strong>${formatMoney(totalValue)}</strong></div>
+            <div class="box"><span>Pedidos ativos</span><strong>${orders.filter(order => order.stage !== "pagamento").length}</strong></div>
+          </div>
+          <table>
+            <thead><tr>${columns.map(column => `<th>${escapeHtml(column)}</th>`).join("")}</tr></thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </body>
+        </html>
+      `;
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        downloadBlob(report, "text/html;charset=utf-8", `relatorio-seam-rio-${today()}.html`);
+        showToast("Pop-up bloqueado. Relatório HTML baixado para gerar PDF.");
+        return;
+      }
+      printWindow.document.open();
+      printWindow.document.write(report);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+
+    function sendEmail() {
+      const order = orderFromForm();
+      if (!order.clientEmail) {
+        showToast("Informe o e-mail da cliente antes de enviar.");
+        return;
+      }
+      const stageId = document.querySelector("#emailStage").value || order.stage;
+      const email = emailTemplate(order, stageId);
+      const mode = document.querySelector("#emailMode").value;
+      if (mode === "copy") {
+        navigator.clipboard.writeText(`Assunto: ${email.subject}\n\n${email.body}`).then(() => showToast("Texto do e-mail copiado."));
+        return;
+      }
+      const mailto = `mailto:${encodeURIComponent(order.clientEmail)}?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
+      window.location.href = mailto;
+      showToast("Rascunho de e-mail gerado no seu aplicativo de e-mail.");
+    }
+
+    async function boot() {
+      try {
+        initSupabase();
+        db = await openDatabase();
+        renderOptions();
+        fillForm(null);
+        await setupAuth();
+        setInterval(renderAll, 60000);
+      } catch (error) {
+        console.error(error);
+        renderOptions();
+        fillForm(null);
+        renderAll();
+        showToast("Não foi possível abrir o banco de dados local.");
+      }
+    }
+
+    document.querySelectorAll(".qty").forEach(input => input.addEventListener("input", () => {
+      updateTotalPieces();
+      renderDeliveryCountdown();
+      renderEmailPreview();
+    }));
+
+    fields.forEach(id => {
+      document.querySelector("#" + id).addEventListener("input", () => {
+        updateTotalPieces();
+        renderPaymentSchedule();
+        renderStageStrip();
+        renderDeliveryCountdown();
+        renderEmailPreview();
+      });
+    });
+
+    el.stageSelect.addEventListener("change", () => {
+      document.querySelector("#emailStage").value = el.stageSelect.value;
+      renderStageStrip();
+      renderDeliveryCountdown();
+      renderEmailPreview();
+    });
+
+    ["paymentType", "paymentInstallments", "paymentMethod", "paymentBaseDate", "deliveryInvoiceDate", "deliveryInvoiceValue"].forEach(id => {
+      document.querySelector("#" + id).addEventListener("change", () => {
+        updatePaymentControls();
+        renderEmailPreview();
+      });
+    });
+
+    ["searchInput", "stageFilter"].forEach(id => {
+      document.querySelector("#" + id).addEventListener("input", renderList);
+    });
+
+    document.querySelector("#emailStage").addEventListener("change", renderEmailPreview);
+    document.querySelector("#emailMode").addEventListener("change", renderEmailPreview);
+
+    document.querySelector("#newOrderBtn").addEventListener("click", () => {
+      fillForm(null);
+      renderAll();
+    });
+
+    document.querySelector("#orderForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const order = orderFromForm();
+      const existingIndex = orders.findIndex(item => item.id === order.id);
+      if (existingIndex >= 0) orders[existingIndex] = order;
+      else orders.unshift(order);
+      selectedId = order.id;
+      await saveOrders();
+      fillForm(order);
+      renderAll();
+      showToast("Pedido salvo com sucesso.");
+    });
+
+    document.querySelector("#emailBtn").addEventListener("click", sendEmail);
+
+    document.querySelector("#duplicateBtn").addEventListener("click", async () => {
+      const order = orderFromForm();
+      order.id = crypto.randomUUID();
+      order.orderNumber = nextOrderNumber();
+      order.updatedAt = new Date().toISOString();
+      orders.unshift(order);
+      selectedId = order.id;
+      await saveOrders();
+      fillForm(order);
+      renderAll();
+      showToast("Pedido duplicado.");
+    });
+
+    document.querySelector("#deleteBtn").addEventListener("click", async () => {
+      if (!selectedId) return;
+      if (!confirm("Excluir este pedido?")) return;
+      orders = orders.filter(order => order.id !== selectedId);
+      selectedId = orders[0]?.id || null;
+      await saveOrders();
+      fillForm(orders[0] || null);
+      renderAll();
+      showToast("Pedido excluído.");
+    });
+
+    document.querySelector("#exportExcelBtn").addEventListener("click", exportExcel);
+    document.querySelector("#exportPdfBtn").addEventListener("click", exportPdf);
+
+    document.querySelector("#exportBtn").addEventListener("click", () => {
+      downloadBlob(JSON.stringify(orders, null, 2), "application/json;charset=utf-8", `pedidos-biquinis-${today()}.json`);
+    });
+
+    document.querySelector("#logoutBtn").addEventListener("click", () => {
+      sessionStorage.removeItem("seamRioUser");
+      location.reload();
+    });
+
+    el.manageUsersBtn.addEventListener("click", async () => {
+      if (!currentUser || currentUser.role !== "admin") {
+        showToast("Somente administrador pode cadastrar usuários.");
+        return;
+      }
+      el.userAdminPanel.classList.toggle("show");
+      if (el.userAdminPanel.classList.contains("show")) await renderUserList();
+    });
+
+    el.createUserBtn.addEventListener("click", async () => {
+      if (!currentUser || currentUser.role !== "admin") {
+        showToast("Somente administrador pode cadastrar usuários.");
+        return;
+      }
+      try {
+        const username = el.newUsername.value;
+        const password = el.newUserPassword.value;
+        if (password.length < 4) throw new Error("Use uma senha com pelo menos 4 caracteres.");
+        await createUser(username, password, el.newUserRole.value, el.newUserClientName.value, el.newUserClientEmail.value);
+        el.newUsername.value = "";
+        el.newUserPassword.value = "";
+        el.newUserClientName.value = "";
+        el.newUserClientEmail.value = "";
+        el.newUserRole.value = "operador";
+        await renderUserList();
+        showToast("Usuário cadastrado pelo administrador.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível cadastrar o usuário.");
+      }
+    });
+
+    document.querySelector("#importFile").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const imported = JSON.parse(reader.result);
+          if (!Array.isArray(imported)) throw new Error("Arquivo inválido");
+          orders = imported.map(order => ({ ...order, id: order.id || crypto.randomUUID() }));
+          selectedId = orders[0]?.id || null;
+          await saveOrders();
+          fillForm(orders[0] || null);
+          renderAll();
+          showToast("Dados importados.");
+        } catch {
+          showToast("Não foi possível importar este arquivo.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    });
+
+    boot();
+  </script>
+</body>
+</html>

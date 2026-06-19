@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal do Cliente - Seam Rio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9e1e7;
+      --surface: #ffffff;
+      --soft: #eef7f7;
+      --accent: #007f7a;
+      --accent-2: #c0476b;
+      --good: #18794e;
+      --danger: #b42318;
+      --shadow: 0 14px 40px rgba(31, 41, 51, .12);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(0, 127, 122, .14), transparent 34%),
+        linear-gradient(315deg, rgba(192, 71, 107, .12), transparent 30%),
+        var(--soft);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: clamp(118px, 15vw, 168px);
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .7);
+      border: 1px solid rgba(217, 225, 231, .72);
+      box-shadow: 0 8px 24px rgba(31, 41, 51, .08);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 8px 0 0;
+      line-height: 1.45;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(31, 41, 51, .05);
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: clip;
+      margin-bottom: 16px;
+    }
+
+    .panel-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .content {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: rgba(255, 255, 255, .9);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .metric strong {
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .order-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .order-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .order-title {
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: rgba(0, 127, 122, .1);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pill.done {
+      background: rgba(24, 121, 78, .12);
+      color: var(--good);
+    }
+
+    .pill.late {
+      background: rgba(180, 35, 24, .11);
+      color: var(--danger);
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 7px;
+    }
+
+    .step {
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      display: grid;
+      align-content: center;
+      background: #f8fafb;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .step.done {
+      border-color: rgba(24, 121, 78, .45);
+      background: rgba(24, 121, 78, .08);
+      color: var(--good);
+    }
+
+    .step.current {
+      border-color: rgba(0, 127, 122, .55);
+      background: rgba(0, 127, 122, .1);
+      color: var(--accent);
+    }
+
+    .empty {
+      padding: 28px 18px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .72);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .2s ease;
+      pointer-events: none;
+      max-width: min(420px, calc(100vw - 36px));
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 820px) {
+      header, .grid-2, .summary-grid, .timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <img class="logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+      <div>
+        <h1>Portal do Cliente</h1>
+        <p class="subtitle">Acompanhe seus pedidos, etapas de produção e previsão de entrega.</p>
+      </div>
+      <button class="btn hidden" id="logoutBtn" type="button">Sair</button>
+    </header>
+
+    <section class="panel" id="loginPanel">
+      <div class="panel-head">
+        <h2>Acesso do cliente</h2>
+        <span class="small">Seam Rio Confecção</span>
+      </div>
+      <form class="content" id="loginForm">
+        <div class="grid-2">
+          <div class="field">
+            <label for="username">Usuário</label>
+            <input id="username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="password">Senha</label>
+            <input id="password" type="password" autocomplete="current-password" required>
+          </div>
+        </div>
+        <button class="btn primary" type="submit">Entrar</button>
+        <div class="small">O acesso é criado pela equipe Seam Rio. Cada cliente visualiza apenas pedidos vinculados ao próprio e-mail.</div>
+      </form>
+    </section>
+
+    <section id="portal" class="hidden">
+      <section class="summary-grid" aria-label="Resumo dos pedidos">
+        <div class="metric"><span>Pedidos</span><strong id="totalOrders">0</strong></div>
+        <div class="metric"><span>Em produção</span><strong id="activeOrders">0</strong></div>
+        <div class="metric"><span>Peças</span><strong id="totalPieces">0</strong></div>
+        <div class="metric"><span>Próxima entrega</span><strong id="nextDelivery">--</strong></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Novo pedido</h2>
+          <span class="small">Solicitação enviada para a produção</span>
+        </div>
+        <form class="content" id="newOrderForm">
+          <div class="grid-2">
+            <div class="field">
+              <label for="newProductName">Produto</label>
+              <input id="newProductName" placeholder="Ex.: conjunto top + calcinha" required>
+            </div>
+            <div class="field">
+              <label for="newProductType">Tipo</label>
+              <select id="newProductType">
+                <option value="conjunto">Conjunto</option>
+                <option value="top">Top</option>
+                <option value="calcinha">Calcinha</option>
+                <option value="saida">Saída de praia</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="newOrderQuantity">Quantidade</label>
+              <input id="newOrderQuantity" type="number" min="1" step="1" value="1" required>
+            </div>
+            <div class="field">
+              <label for="newOrderDueDate">Previsão desejada</label>
+              <input id="newOrderDueDate" type="date">
+            </div>
+          </div>
+          <div class="field">
+            <label for="newOrderNotes">Detalhes do pedido</label>
+            <textarea id="newOrderNotes" placeholder="Tamanhos, cores, tecidos, grade, observações de produção..."></textarea>
+          </div>
+          <div class="actions-row">
+            <button class="btn primary" type="submit">Enviar pedido</button>
+            <span class="small">A equipe receberá a solicitação no sistema interno.</span>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Falar com a produção</h2>
+          <span class="small">Mensagens e solicitações vinculadas ao pedido</span>
+        </div>
+        <form class="content" id="requestForm">
+          <div class="grid-2">
+            <div class="field">
+              <label for="requestOrder">Pedido</label>
+              <select id="requestOrder"></select>
+            </div>
+            <div class="field">
+              <label for="requestType">Tipo de solicitação</label>
+              <select id="requestType">
+                <option value="mensagem">Mensagem para produção</option>
+                <option value="interromper">Solicitar interrupção da produção</option>
+                <option value="mudanca">Solicitar mudança no produto</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="requestMessage">Mensagem</label>
+            <textarea id="requestMessage" placeholder="Descreva a solicitação com o máximo de detalhes." required></textarea>
+          </div>
+          <button class="btn primary" type="submit">Enviar solicitação</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="clientTitle">Meus pedidos</h2>
+          <span class="small" id="clientEmailLabel"></span>
+        </div>
+        <div class="content">
+          <div class="order-list" id="orderList"></div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const CLOUD_ORDER_TABLE = "orders";
+    const CLOUD_USER_TABLE = "app_users";
+    const CLOUD_REQUEST_TABLE = "client_requests";
+    const stages = [
+      { id: "pilotagem", label: "Pilotagem" },
+      { id: "inicio-producao", label: "Início de produção" },
+      { id: "arremate", label: "Arremate" },
+      { id: "finalizacao", label: "Finalização" },
+      { id: "entrega", label: "Entrega" },
+      { id: "pagamento", label: "Pagamento" }
+    ];
+
+    let cloudDb = null;
+    let currentUser = null;
+    let orders = [];
+
+    const el = {
+      loginPanel: document.querySelector("#loginPanel"),
+      loginForm: document.querySelector("#loginForm"),
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      portal: document.querySelector("#portal"),
+      totalOrders: document.querySelector("#totalOrders"),
+      activeOrders: document.querySelector("#activeOrders"),
+      totalPieces: document.querySelector("#totalPieces"),
+      nextDelivery: document.querySelector("#nextDelivery"),
+      clientTitle: document.querySelector("#clientTitle"),
+      clientEmailLabel: document.querySelector("#clientEmailLabel"),
+      newOrderForm: document.querySelector("#newOrderForm"),
+      newProductName: document.querySelector("#newProductName"),
+      newProductType: document.querySelector("#newProductType"),
+      newOrderQuantity: document.querySelector("#newOrderQuantity"),
+      newOrderDueDate: document.querySelector("#newOrderDueDate"),
+      newOrderNotes: document.querySelector("#newOrderNotes"),
+      requestForm: document.querySelector("#requestForm"),
+      requestOrder: document.querySelector("#requestOrder"),
+      requestType: document.querySelector("#requestType"),
+      requestMessage: document.querySelector("#requestMessage"),
+      orderList: document.querySelector("#orderList"),
+      toast: document.querySelector("#toast")
+    };
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) {
+        throw new Error("Supabase não configurado.");
+      }
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      });
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function getUserByUsername(username) {
+      const { data, error } = await cloudDb
+        .from(CLOUD_USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function validateUser(username, password) {
+      const user = await getUserByUsername(username);
+      if (!user) return null;
+      const passwordHash = await hashPassword(password, user.salt);
+      if (passwordHash !== user.password_hash) return null;
+      if (user.role !== "cliente") throw new Error("Este acesso é exclusivo para clientes.");
+      if (!user.client_email) throw new Error("Usuário cliente sem e-mail vinculado.");
+      return user;
+    }
+
+    async function loadClientOrders() {
+      const { data, error } = await cloudDb
+        .from(CLOUD_ORDER_TABLE)
+        .select("payload")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      const email = normalizeEmail(currentUser.client_email);
+      return (data || [])
+        .map(row => row.payload)
+        .filter(order => normalizeEmail(order?.clientEmail) === email);
+    }
+
+    async function saveClientRequest(request) {
+      const { error } = await cloudDb.from(CLOUD_REQUEST_TABLE).insert(request);
+      if (error) throw error;
+    }
+
+    async function saveNewOrder(order) {
+      const { error } = await cloudDb.from(CLOUD_ORDER_TABLE).insert({
+        id: order.id,
+        order_number: order.orderNumber,
+        client_name: order.clientName,
+        stage: order.stage,
+        due_date: order.dueDate || null,
+        updated_at: order.updatedAt,
+        payload: order
+      });
+      if (error) throw error;
+    }
+
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function stageIndex(stageId) {
+      return Math.max(0, stages.findIndex(stage => stage.id === stageId));
+    }
+
+    function stageLabel(stageId) {
+      return stages.find(stage => stage.id === stageId)?.label || stages[0].label;
+    }
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sem data";
+      return new Date(value + "T00:00:00").toLocaleDateString("pt-BR");
+    }
+
+    function totalPieces(order) {
+      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0);
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function nextOrderNumber() {
+      return `CLI-${Date.now().toString().slice(-8)}`;
+    }
+
+    function orderQuantitiesFromType(type, quantity) {
+      const result = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0 };
+      if (type === "top") result.qtyTops = quantity;
+      if (type === "calcinha") result.qtyBottoms = quantity;
+      if (type === "saida") result.qtyCoverups = quantity;
+      if (type === "conjunto") {
+        result.qtyTops = quantity;
+        result.qtyBottoms = quantity;
+      }
+      return result;
+    }
+
+    function deliveryInfo(order) {
+      if (order.stage === "entrega" || order.stage === "pagamento") {
+        return {
+          text: order.stage === "pagamento" ? "Entregue / Pagamento" : "Entregue",
+          className: "done"
+        };
+      }
+
+      if (!order.dueDate) return { text: "Sem previsão", className: "" };
+
+      const target = new Date(order.dueDate + "T23:59:59");
+      const now = new Date();
+      const diffMs = target - now;
+      const days = Math.ceil(Math.abs(diffMs) / (24 * 60 * 60 * 1000));
+
+      if (diffMs < 0) {
+        return {
+          text: days <= 1 ? "Atrasado há 1 dia" : `Atrasado há ${days} dias`,
+          className: "late"
+        };
+      }
+
+      return {
+        text: days <= 1 ? "Vence hoje" : `${days} dias restantes`,
+        className: days <= 7 ? "" : ""
+      };
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function renderPortal() {
+      el.loginPanel.classList.add("hidden");
+      el.portal.classList.remove("hidden");
+      el.logoutBtn.classList.remove("hidden");
+      el.clientTitle.textContent = currentUser.client_name || currentUser.username;
+      el.clientEmailLabel.textContent = currentUser.client_email;
+
+      el.totalOrders.textContent = orders.length;
+      el.activeOrders.textContent = orders.filter(order => order.stage !== "pagamento").length;
+      el.totalPieces.textContent = orders.reduce((sum, order) => sum + totalPieces(order), 0);
+      const next = orders
+        .filter(order => order.dueDate && order.stage !== "pagamento")
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+      el.nextDelivery.textContent = next ? formatDate(next.dueDate) : "--";
+
+      if (!orders.length) {
+        el.orderList.innerHTML = `<div class="empty">Nenhum pedido encontrado para este cliente.</div>`;
+        el.requestOrder.innerHTML = `<option value="">Nenhum pedido disponível</option>`;
+        return;
+      }
+
+      el.requestOrder.innerHTML = orders.map(order => (
+        `<option value="${order.id}">${escapeHtml(order.orderNumber)} · ${escapeHtml(order.productName || "Pedido")}</option>`
+      )).join("");
+
+      el.orderList.innerHTML = orders.map(order => {
+        const currentIndex = stageIndex(order.stage);
+        const status = deliveryInfo(order);
+        return `
+          <article class="order-card">
+            <div class="order-top">
+              <div>
+                <div class="order-title">${escapeHtml(order.orderNumber)} · ${escapeHtml(order.productName || "Pedido")}</div>
+                <div class="small">Pedido em ${formatDate(order.orderDate)} · Previsão ${formatDate(order.dueDate)} · ${formatMoney(order.orderValue)}</div>
+                <div class="small">${totalPieces(order)} peça${totalPieces(order) === 1 ? "" : "s"} · ${escapeHtml(order.notes || "")}</div>
+              </div>
+              <span class="pill ${status.className}">${stageLabel(order.stage)}</span>
+            </div>
+            <div class="timeline">
+              ${stages.map((stage, index) => `
+                <div class="step ${index < currentIndex ? "done" : index === currentIndex ? "current" : ""}">
+                  ${stage.label}
+                </div>
+              `).join("")}
+            </div>
+            <div class="small">Status de entrega: ${status.text}</div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 2800);
+    }
+
+    el.loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const user = await validateUser(el.username.value, el.password.value);
+        if (!user) throw new Error("Usuário ou senha inválidos.");
+        currentUser = user;
+        orders = await loadClientOrders();
+        renderPortal();
+      } catch (error) {
+        showToast(error.message || "Não foi possível entrar.");
+      }
+    });
+
+    el.newOrderForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const quantity = Math.max(1, Number(el.newOrderQuantity.value || 1));
+        const productType = el.newProductType.value;
+        const quantities = orderQuantitiesFromType(productType, quantity);
+        const order = {
+          id: crypto.randomUUID(),
+          source: "cliente",
+          productName: el.newProductName.value.trim(),
+          productType,
+          clientName: currentUser.client_name || currentUser.username,
+          clientEmail: currentUser.client_email,
+          clientPhone: "",
+          clientDocument: "",
+          clientAddress: "",
+          orderNumber: nextOrderNumber(),
+          orderDate: today(),
+          startDate: "",
+          dueDate: el.newOrderDueDate.value,
+          orderValue: 0,
+          ...quantities,
+          remittanceInvoiceNumber: "",
+          remittanceInvoiceDate: "",
+          remittanceInvoiceValue: 0,
+          remittanceInvoiceSupplier: "",
+          remittanceInvoiceNotes: "",
+          deliveryInvoiceNumber: "",
+          deliveryInvoiceDate: "",
+          deliveryInvoiceValue: 0,
+          paymentBaseDate: "",
+          paymentType: "avista",
+          paymentInstallments: "1",
+          paymentMethod: "pix",
+          paymentStatus: "pendente",
+          deliveryInvoiceNotes: "",
+          stage: "pilotagem",
+          notes: el.newOrderNotes.value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+        order.totalPieces = totalPieces(order);
+        await saveNewOrder(order);
+        await saveClientRequest({
+          id: crypto.randomUUID(),
+          order_id: order.id,
+          order_number: order.orderNumber,
+          client_email: currentUser.client_email,
+          client_name: currentUser.client_name || currentUser.username,
+          type: "novo_pedido",
+          message: `Novo pedido: ${order.productName}. ${order.notes || ""}`,
+          status: "pendente",
+          created_at: new Date().toISOString()
+        });
+        orders = await loadClientOrders();
+        el.newOrderForm.reset();
+        el.newOrderQuantity.value = "1";
+        renderPortal();
+        showToast("Pedido enviado para a produção.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível enviar o pedido.");
+      }
+    });
+
+    el.requestForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const order = orders.find(item => item.id === el.requestOrder.value);
+        if (!order) throw new Error("Selecione um pedido.");
+        await saveClientRequest({
+          id: crypto.randomUUID(),
+          order_id: order.id,
+          order_number: order.orderNumber,
+          client_email: currentUser.client_email,
+          client_name: currentUser.client_name || currentUser.username,
+          type: el.requestType.value,
+          message: el.requestMessage.value.trim(),
+          status: "pendente",
+          created_at: new Date().toISOString()
+        });
+        el.requestMessage.value = "";
+        el.requestType.value = "mensagem";
+        showToast("Solicitação enviada para a produção.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível enviar a solicitação.");
+      }
+    });
+
+    el.logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      orders = [];
+      el.password.value = "";
+      el.portal.classList.add("hidden");
+      el.logoutBtn.classList.add("hidden");
+      el.loginPanel.classList.remove("hidden");
+    });
+
+    try {
+      initSupabase();
+    } catch (error) {
+      showToast(error.message);
+    }
+  </script>
+</body>
+</html>
