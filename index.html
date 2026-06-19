@@ -129,6 +129,14 @@
       justify-content: flex-end;
     }
 
+    .request-reply {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--accent);
+      background: #eef8f7;
+      border-radius: 6px;
+    }
+
     .app-shell {
       width: min(1480px, calc(100vw - 32px));
       margin: 0 auto;
@@ -751,10 +759,37 @@
 
     <section class="panel" id="clientRequestsPanel">
       <div class="panel-head">
-        <h2>Mensagens dos clientes</h2>
+        <h2>Solicitações com clientes</h2>
         <span class="small">Pedidos, mudanças e solicitações de interrupção</span>
       </div>
       <div class="form-wrap">
+        <div class="grid-3">
+          <div class="field">
+            <label for="productionRequestOrder">Pedido</label>
+            <select id="productionRequestOrder"></select>
+          </div>
+          <div class="field">
+            <label for="productionRequestType">Tipo</label>
+            <select id="productionRequestType">
+              <option value="producao">Solicitação da produção</option>
+              <option value="mensagem">Mensagem</option>
+              <option value="mudanca">Aprovação de mudança</option>
+              <option value="interromper">Interrupção/pausa</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="productionRequestEmail">E-mail do cliente</label>
+            <input id="productionRequestEmail" type="email" placeholder="cliente@email.com">
+          </div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label for="productionRequestMessage">Solicitação para o cliente</label>
+          <textarea id="productionRequestMessage" placeholder="Descreva o que o cliente precisa aprovar, responder ou confirmar."></textarea>
+        </div>
+        <div class="actions-row">
+          <button class="btn primary" id="createProductionRequestBtn" type="button">Criar solicitação</button>
+          <button class="btn" id="emailProductionRequestBtn" type="button">Criar e enviar por e-mail</button>
+        </div>
         <div class="user-list" id="clientRequestList"></div>
       </div>
     </section>
@@ -867,6 +902,10 @@
               <div class="field">
                 <label for="qtyCoverups">Saídas de praia</label>
                 <input id="qtyCoverups" class="qty" type="number" min="0" step="1" value="0">
+              </div>
+              <div class="field">
+                <label for="qtyOthers">Outros</label>
+                <input id="qtyOthers" class="qty" type="number" min="0" step="1" value="0">
               </div>
             </div>
           </section>
@@ -1046,6 +1085,7 @@
         qtyBottoms: 12,
         qtyTops: 12,
         qtyCoverups: 4,
+        qtyOthers: 0,
         remittanceInvoiceNumber: "",
         remittanceInvoiceDate: "",
         remittanceInvoiceValue: 0,
@@ -1111,6 +1151,12 @@
       chartSection: document.querySelector("#chartSection"),
       clientRequestsPanel: document.querySelector("#clientRequestsPanel"),
       clientRequestList: document.querySelector("#clientRequestList"),
+      productionRequestOrder: document.querySelector("#productionRequestOrder"),
+      productionRequestType: document.querySelector("#productionRequestType"),
+      productionRequestEmail: document.querySelector("#productionRequestEmail"),
+      productionRequestMessage: document.querySelector("#productionRequestMessage"),
+      createProductionRequestBtn: document.querySelector("#createProductionRequestBtn"),
+      emailProductionRequestBtn: document.querySelector("#emailProductionRequestBtn"),
       managementMain: document.querySelector("#managementMain"),
       newUsername: document.querySelector("#newUsername"),
       newUserPassword: document.querySelector("#newUserPassword"),
@@ -1125,7 +1171,7 @@
     const fields = [
       "clientName", "clientEmail", "clientPhone", "clientDocument", "clientAddress",
       "orderNumber", "orderDate", "startDate", "dueDate", "orderValue",
-      "qtyBottoms", "qtyTops", "qtyCoverups",
+      "qtyBottoms", "qtyTops", "qtyCoverups", "qtyOthers",
       "remittanceInvoiceNumber", "remittanceInvoiceDate", "remittanceInvoiceValue", "remittanceInvoiceSupplier", "remittanceInvoiceNotes",
       "deliveryInvoiceNumber", "deliveryInvoiceDate", "deliveryInvoiceValue", "paymentBaseDate", "paymentType", "paymentInstallments",
       "paymentMethod", "paymentStatus", "deliveryInvoiceNotes", "notes"
@@ -1333,6 +1379,93 @@
         .update({ status })
         .eq("id", requestId);
       if (error) throw error;
+    }
+
+    async function createProductionRequest(sendEmailAfterCreate = false) {
+      if (!usingSupabase) throw new Error("Solicitações online precisam do Supabase.");
+      const order = orders.find(item => item.id === el.productionRequestOrder.value) || orderFromForm();
+      const message = el.productionRequestMessage.value.trim();
+      const clientEmail = normalizeEmail(el.productionRequestEmail.value || order.clientEmail);
+      if (!clientEmail) throw new Error("Informe o e-mail do cliente.");
+      if (!message) throw new Error("Escreva a solicitação para o cliente.");
+      const request = {
+        id: crypto.randomUUID(),
+        order_id: order.id || null,
+        order_number: order.orderNumber || "",
+        client_email: clientEmail,
+        client_name: order.clientName || "",
+        type: el.productionRequestType.value,
+        message,
+        response: "",
+        responded_at: null,
+        status: "pendente",
+        direction: "producao",
+        created_at: new Date().toISOString()
+      };
+      const { error } = await cloudDb.from(CLOUD_REQUEST_TABLE).insert(request);
+      if (error) throw error;
+      clientRequests = await loadClientRequests();
+      renderClientRequests();
+      el.productionRequestMessage.value = "";
+      if (sendEmailAfterCreate) await sendProductionRequestEmail(request);
+      return request;
+    }
+
+    async function getClientUserByEmail(email) {
+      const { data, error } = await cloudDb
+        .from(CLOUD_USER_TABLE)
+        .select("*")
+        .eq("role", "cliente")
+        .eq("client_email", normalizeEmail(email))
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    function temporaryPassword() {
+      return "Seam" + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    async function resetClientPassword(user, password) {
+      const salt = crypto.randomUUID();
+      const passwordHash = await hashPassword(password, salt);
+      const { error } = await cloudDb
+        .from(CLOUD_USER_TABLE)
+        .update({ salt, password_hash: passwordHash })
+        .eq("id", user.id);
+      if (error) throw error;
+    }
+
+    function clientPortalUrl(username) {
+      const url = new URL("cliente.html", window.location.href);
+      url.searchParams.set("usuario", username);
+      return url.href;
+    }
+
+    async function sendProductionRequestEmail(request) {
+      const user = await getClientUserByEmail(request.client_email);
+      if (!user) throw new Error("Não encontrei usuário cliente com esse e-mail.");
+      const password = temporaryPassword();
+      await resetClientPassword(user, password);
+      const link = clientPortalUrl(user.username);
+      const subject = `Solicitação Seam Rio - pedido ${request.order_number || ""}`;
+      const body = [
+        `Olá, ${request.client_name || user.client_name || "cliente"}!`,
+        "",
+        `Temos uma solicitação da produção sobre o pedido ${request.order_number || ""}:`,
+        "",
+        request.message,
+        "",
+        "Acesse a área do cliente para responder:",
+        link,
+        "",
+        `Usuário: ${user.username}`,
+        `Senha temporária: ${password}`,
+        "",
+        "Após entrar, responda na seção Solicitações da produção."
+      ].join("\n");
+      window.location.href = `mailto:${encodeURIComponent(request.client_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      showToast("E-mail criado com senha temporária do cliente.");
     }
 
     async function getUsers() {
@@ -1712,7 +1845,7 @@
     }
 
     function totalPieces(order) {
-      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0);
+      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0) + Number(order.qtyOthers || 0);
     }
 
     function stageIndex(stageId) {
@@ -1759,6 +1892,7 @@
       document.querySelector("#qtyBottoms").value = order?.qtyBottoms || 0;
       document.querySelector("#qtyTops").value = order?.qtyTops || 0;
       document.querySelector("#qtyCoverups").value = order?.qtyCoverups || 0;
+      document.querySelector("#qtyOthers").value = order?.qtyOthers || 0;
       document.querySelector("#remittanceInvoiceNumber").value = order?.remittanceInvoiceNumber || "";
       document.querySelector("#remittanceInvoiceDate").value = order?.remittanceInvoiceDate || "";
       document.querySelector("#remittanceInvoiceValue").value = order?.remittanceInvoiceValue || "";
@@ -1848,7 +1982,10 @@
         top: "Top",
         calcinha: "Calcinha",
         saida: "Saída de praia",
-        conjunto: "Conjunto"
+        conjunto: "Conjunto",
+        maio: "Maiô",
+        vestido: "Vestido",
+        short: "Short"
       }[type] || "Produto";
     }
 
@@ -1912,11 +2049,12 @@
     }
 
     function orderQuantitiesFromProduct(product, quantity) {
-      const quantities = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0 };
+      const quantities = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0, qtyOthers: 0 };
       if (!product) return quantities;
       if (product.type === "top") quantities.qtyTops = quantity;
       if (product.type === "calcinha") quantities.qtyBottoms = quantity;
       if (product.type === "saida") quantities.qtyCoverups = quantity;
+      if (["maio", "vestido", "short"].includes(product.type)) quantities.qtyOthers = quantity;
       if (product.type === "conjunto") {
         quantities.qtyTops = quantity;
         quantities.qtyBottoms = quantity;
@@ -1966,10 +2104,27 @@
     function requestTypeLabel(type) {
       return {
         novo_pedido: "Novo pedido",
+        producao: "Solicitação da produção",
         mensagem: "Mensagem",
         interromper: "Interromper produção",
         mudanca: "Mudança no produto"
       }[type] || "Solicitação";
+    }
+
+    function renderProductionRequestOptions() {
+      if (!el.productionRequestOrder) return;
+      if (!orders.length) {
+        el.productionRequestOrder.innerHTML = `<option value="">Nenhum pedido cadastrado</option>`;
+        el.productionRequestEmail.value = "";
+        return;
+      }
+      const previous = el.productionRequestOrder.value || selectedId || orders[0]?.id || "";
+      el.productionRequestOrder.innerHTML = orders.map(order => (
+        `<option value="${order.id}">${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</option>`
+      )).join("");
+      el.productionRequestOrder.value = orders.some(order => order.id === previous) ? previous : orders[0].id;
+      const order = orders.find(item => item.id === el.productionRequestOrder.value);
+      el.productionRequestEmail.value = order?.clientEmail || "";
     }
 
     function renderClientRequests() {
@@ -1989,13 +2144,27 @@
             <strong>${requestTypeLabel(request.type)} · ${escapeHtml(request.order_number || "Sem pedido")}</strong>
             <div class="small">${escapeHtml(request.client_name || "")} · ${escapeHtml(request.client_email || "")} · ${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
             <div class="small">${escapeHtml(request.message || "")}</div>
+            ${request.response ? `<div class="request-reply"><strong>Resposta do cliente:</strong><br>${escapeHtml(request.response)}<div class="small">${request.responded_at ? new Date(request.responded_at).toLocaleString("pt-BR") : ""}</div></div>` : ""}
           </div>
           <div class="user-actions">
-            <span class="pill ${request.status === "resolvido" ? "done" : request.type === "interromper" ? "late" : ""}">${request.status || "pendente"}</span>
+            <span class="pill ${request.status === "resolvido" ? "done" : request.type === "interromper" ? "late" : ""}">${request.response && request.status !== "resolvido" ? "respondida" : request.status || "pendente"}</span>
+            ${request.direction === "producao" ? `<button class="btn" type="button" data-email-request="${request.id}">Enviar e-mail</button>` : ""}
             ${request.status === "resolvido" ? "" : `<button class="btn" type="button" data-resolve-request="${request.id}">Resolver</button>`}
           </div>
         </div>
       `).join("");
+
+      el.clientRequestList.querySelectorAll("[data-email-request]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const request = clientRequests.find(item => item.id === button.dataset.emailRequest);
+          if (!request) return;
+          try {
+            await sendProductionRequestEmail(request);
+          } catch (error) {
+            showToast(error.message || "Não foi possível gerar o e-mail.");
+          }
+        });
+      });
 
       el.clientRequestList.querySelectorAll("[data-resolve-request]").forEach(button => {
         button.addEventListener("click", async () => {
@@ -2069,7 +2238,7 @@
     function emailTemplate(order, stageId) {
       const client = order.clientName || "cliente";
       const pieces = totalPieces(order);
-      const piecesText = `${pieces} peça${pieces === 1 ? "" : "s"} (${order.qtyBottoms || 0} calcinha${Number(order.qtyBottoms) === 1 ? "" : "s"}, ${order.qtyTops || 0} top${Number(order.qtyTops) === 1 ? "" : "s"} e ${order.qtyCoverups || 0} saída${Number(order.qtyCoverups) === 1 ? "" : "s"} de praia)`;
+      const piecesText = `${pieces} peça${pieces === 1 ? "" : "s"} (${order.qtyBottoms || 0} calcinha${Number(order.qtyBottoms) === 1 ? "" : "s"}, ${order.qtyTops || 0} top${Number(order.qtyTops) === 1 ? "" : "s"}, ${order.qtyCoverups || 0} saída${Number(order.qtyCoverups) === 1 ? "" : "s"} de praia e ${order.qtyOthers || 0} outro${Number(order.qtyOthers) === 1 ? "" : "s"})`;
       const subject = `Atualização do pedido ${order.orderNumber || ""} - ${stageLabel(stageId)}`;
       const invoiceLine = order.deliveryInvoiceNumber ? `\nNota fiscal de entrega: ${order.deliveryInvoiceNumber}.` : "";
       const paymentLine = order.paymentSchedule ? `\n\nPagamentos previstos:\n${order.paymentSchedule}` : "";
@@ -2099,6 +2268,7 @@
     function renderAll() {
       renderSummary();
       renderProductionChart();
+      renderProductionRequestOptions();
       renderClientRequests();
       renderList();
       renderStageStrip();
@@ -2136,6 +2306,7 @@
         "Calcinhas": Number(order.qtyBottoms || 0),
         "Tops": Number(order.qtyTops || 0),
         "Saídas de praia": Number(order.qtyCoverups || 0),
+        "Outros": Number(order.qtyOthers || 0),
         "NF remessa - número": order.remittanceInvoiceNumber || "",
         "NF remessa - data": formatDate(order.remittanceInvoiceDate),
         "NF remessa - valor": Number(order.remittanceInvoiceValue || 0),
@@ -2357,6 +2528,28 @@
     });
 
     document.querySelector("#emailBtn").addEventListener("click", sendEmail);
+
+    el.productionRequestOrder.addEventListener("change", () => {
+      const order = orders.find(item => item.id === el.productionRequestOrder.value);
+      el.productionRequestEmail.value = order?.clientEmail || "";
+    });
+
+    el.createProductionRequestBtn.addEventListener("click", async () => {
+      try {
+        await createProductionRequest(false);
+        showToast("Solicitação criada para o cliente.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível criar a solicitação.");
+      }
+    });
+
+    el.emailProductionRequestBtn.addEventListener("click", async () => {
+      try {
+        await createProductionRequest(true);
+      } catch (error) {
+        showToast(error.message || "Não foi possível criar e enviar a solicitação.");
+      }
+    });
 
     document.querySelector("#duplicateBtn").addEventListener("click", async () => {
       const order = orderFromForm();

@@ -193,6 +193,13 @@
       gap: 10px;
     }
 
+    .request-reply {
+      padding: 10px;
+      border-left: 3px solid var(--accent);
+      background: #eef8f7;
+      border-radius: 6px;
+    }
+
     .actions-row {
       display: flex;
       flex-wrap: wrap;
@@ -368,9 +375,12 @@
               <label for="newProductType">Tipo</label>
               <select id="newProductType">
                 <option value="conjunto">Conjunto</option>
+                <option value="maio">Maiô</option>
+                <option value="vestido">Vestido</option>
+                <option value="saida">Saída de praia</option>
                 <option value="top">Top</option>
                 <option value="calcinha">Calcinha</option>
-                <option value="saida">Saída de praia</option>
+                <option value="short">Short</option>
               </select>
             </div>
             <div class="field">
@@ -423,6 +433,16 @@
 
       <section class="panel">
         <div class="panel-head">
+          <h2>Solicitações da produção</h2>
+          <span class="small">Responda confirmações, aprovações e dúvidas da equipe</span>
+        </div>
+        <div class="content">
+          <div class="order-list" id="productionRequestList"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
           <h2 id="clientTitle">Meus pedidos</h2>
           <span class="small" id="clientEmailLabel"></span>
         </div>
@@ -451,6 +471,7 @@
     let cloudDb = null;
     let currentUser = null;
     let orders = [];
+    let clientRequests = [];
 
     const el = {
       loginPanel: document.querySelector("#loginPanel"),
@@ -475,6 +496,7 @@
       requestOrder: document.querySelector("#requestOrder"),
       requestType: document.querySelector("#requestType"),
       requestMessage: document.querySelector("#requestMessage"),
+      productionRequestList: document.querySelector("#productionRequestList"),
       orderList: document.querySelector("#orderList"),
       toast: document.querySelector("#toast")
     };
@@ -535,6 +557,29 @@
       if (error) throw error;
     }
 
+    async function loadProductionRequests() {
+      const { data, error } = await cloudDb
+        .from(CLOUD_REQUEST_TABLE)
+        .select("*")
+        .eq("client_email", normalizeEmail(currentUser.client_email))
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []).filter(request => request.direction === "producao" || request.type === "producao");
+    }
+
+    async function answerProductionRequest(requestId, response) {
+      const { error } = await cloudDb
+        .from(CLOUD_REQUEST_TABLE)
+        .update({
+          response,
+          responded_at: new Date().toISOString(),
+          status: "respondida"
+        })
+        .eq("id", requestId)
+        .eq("client_email", normalizeEmail(currentUser.client_email));
+      if (error) throw error;
+    }
+
     async function saveNewOrder(order) {
       const { error } = await cloudDb.from(CLOUD_ORDER_TABLE).insert({
         id: order.id,
@@ -570,7 +615,7 @@
     }
 
     function totalPieces(order) {
-      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0);
+      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0) + Number(order.qtyOthers || 0);
     }
 
     function today() {
@@ -582,10 +627,11 @@
     }
 
     function orderQuantitiesFromType(type, quantity) {
-      const result = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0 };
+      const result = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0, qtyOthers: 0 };
       if (type === "top") result.qtyTops = quantity;
       if (type === "calcinha") result.qtyBottoms = quantity;
       if (type === "saida") result.qtyCoverups = quantity;
+      if (["maio", "vestido", "short"].includes(type)) result.qtyOthers = quantity;
       if (type === "conjunto") {
         result.qtyTops = quantity;
         result.qtyBottoms = quantity;
@@ -641,6 +687,7 @@
         .filter(order => order.dueDate && order.stage !== "pagamento")
         .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
       el.nextDelivery.textContent = next ? formatDate(next.dueDate) : "--";
+      renderProductionRequests();
 
       if (!orders.length) {
         el.orderList.innerHTML = `<div class="empty">Nenhum pedido encontrado para este cliente.</div>`;
@@ -678,6 +725,54 @@
       }).join("");
     }
 
+    function renderProductionRequests() {
+      if (!clientRequests.length) {
+        el.productionRequestList.innerHTML = `<div class="empty">Nenhuma solicitação da produção no momento.</div>`;
+        return;
+      }
+
+      el.productionRequestList.innerHTML = clientRequests.map(request => `
+        <article class="order-card">
+          <div class="order-top">
+            <div>
+              <div class="order-title">${escapeHtml(request.order_number || "Sem pedido")} · Solicitação da produção</div>
+              <div class="small">${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
+            </div>
+            <span class="pill ${request.status === "resolvido" ? "done" : ""}">${request.status || "pendente"}</span>
+          </div>
+          <div>${escapeHtml(request.message || "")}</div>
+          ${request.response ? `<div class="request-reply"><strong>Sua resposta enviada:</strong><br>${escapeHtml(request.response)}</div>` : ""}
+          ${request.status === "resolvido" ? "" : `
+            <div class="field">
+              <label for="response-${request.id}">Responder</label>
+              <textarea id="response-${request.id}" data-response-text="${request.id}" placeholder="Digite sua resposta para a produção.">${escapeHtml(request.response || "")}</textarea>
+            </div>
+            <div class="actions-row">
+              <button class="btn primary" type="button" data-answer-request="${request.id}">Enviar resposta</button>
+              <span class="small">A produção verá sua resposta no sistema interno.</span>
+            </div>
+          `}
+        </article>
+      `).join("");
+
+      el.productionRequestList.querySelectorAll("[data-answer-request]").forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            const requestId = button.dataset.answerRequest;
+            const textarea = el.productionRequestList.querySelector(`[data-response-text="${requestId}"]`);
+            const response = textarea.value.trim();
+            if (!response) throw new Error("Digite sua resposta.");
+            await answerProductionRequest(requestId, response);
+            clientRequests = await loadProductionRequests();
+            renderProductionRequests();
+            showToast("Resposta enviada para a produção.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível enviar a resposta.");
+          }
+        });
+      });
+    }
+
     function showToast(message) {
       el.toast.textContent = message;
       el.toast.classList.add("show");
@@ -691,6 +786,7 @@
         if (!user) throw new Error("Usuário ou senha inválidos.");
         currentUser = user;
         orders = await loadClientOrders();
+        clientRequests = await loadProductionRequests();
         renderPortal();
       } catch (error) {
         showToast(error.message || "Não foi possível entrar.");
@@ -787,6 +883,7 @@
     el.logoutBtn.addEventListener("click", () => {
       currentUser = null;
       orders = [];
+      clientRequests = [];
       el.password.value = "";
       el.portal.classList.add("hidden");
       el.logoutBtn.classList.add("hidden");
@@ -795,6 +892,8 @@
 
     try {
       initSupabase();
+      const urlUser = new URLSearchParams(window.location.search).get("usuario");
+      if (urlUser) el.username.value = urlUser;
     } catch (error) {
       showToast(error.message);
     }
