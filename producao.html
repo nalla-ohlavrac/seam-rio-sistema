@@ -333,6 +333,40 @@
       background: var(--accent-2);
     }
 
+    .stage-order-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stage-order-group {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .stage-order-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-weight: 900;
+    }
+
+    .stage-order-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafb;
+      padding: 9px 10px;
+      display: grid;
+      gap: 4px;
+    }
+
     main {
       display: grid;
       grid-template-columns: minmax(390px, .88fr) minmax(560px, 1.12fr);
@@ -2198,7 +2232,7 @@
       const maxOrders = Math.max(1, ...totals.map(item => item.orders));
       const maxPieces = Math.max(1, ...totals.map(item => item.pieces));
 
-      el.productionChart.innerHTML = totals.map(item => {
+      const chartRows = totals.map(item => {
         const orderWidth = Math.max(item.orders ? 4 : 0, (item.orders / maxOrders) * 100);
         const pieceWidth = Math.max(item.pieces ? 4 : 0, (item.pieces / maxPieces) * 100);
         return `
@@ -2215,6 +2249,32 @@
           </div>
         `;
       }).join("");
+
+      const stageBoard = `
+        <div class="stage-order-board">
+          ${stages.map(stage => {
+            const stageOrders = orders
+              .filter(order => order.stage === stage.id)
+              .sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+            return `
+              <div class="stage-order-group">
+                <div class="stage-order-head">
+                  <span>${escapeHtml(stage.label)}</span>
+                  <span class="pill">${stageOrders.length}</span>
+                </div>
+                ${stageOrders.length ? stageOrders.map(order => `
+                  <div class="stage-order-card">
+                    <strong>${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</strong>
+                    <div class="small">${formatDate(order.dueDate)} · ${totalPieces(order)} peça${totalPieces(order) === 1 ? "" : "s"}</div>
+                  </div>
+                `).join("") : `<div class="empty">Nenhum pedido.</div>`}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      el.productionChart.innerHTML = chartRows + stageBoard;
     }
 
     function renderStageStrip() {

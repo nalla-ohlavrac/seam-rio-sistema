@@ -186,6 +186,14 @@
       align-items: center;
       min-height: 64px;
     }
+    .stage-block {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .72);
+      padding: 10px;
+    }
     .stage-name {
       font-weight: 900;
       font-size: clamp(16px, 1.1vw, 22px);
@@ -214,6 +222,26 @@
       font-weight: 900;
       text-align: right;
       font-size: clamp(17px, 1.2vw, 24px);
+    }
+    .stage-orders {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 8px;
+    }
+    .stage-order {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 9px 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      min-height: 54px;
+    }
+    .stage-order strong {
+      font-size: clamp(15px, 1vw, 20px);
+      line-height: 1.2;
     }
     .product-row, .urgent-row {
       display: flex;
@@ -494,14 +522,33 @@
       el.stageList.innerHTML = totals.map(item => {
         const orderWidth = Math.max(item.orders ? 4 : 0, (item.orders / maxOrders) * 100);
         const pieceWidth = Math.max(item.pieces ? 4 : 0, (item.pieces / maxPieces) * 100);
+        const stageOrders = orders
+          .filter(order => order.stage === item.id)
+          .sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
         return `
-          <div class="stage-row">
-            <div class="stage-name">${escapeHtml(item.label)}</div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${orderWidth}%"></div>
-              <div class="bar-fill pieces" style="width:${pieceWidth}%"></div>
+          <div class="stage-block">
+            <div class="stage-row">
+              <div class="stage-name">${escapeHtml(item.label)}</div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${orderWidth}%"></div>
+                <div class="bar-fill pieces" style="width:${pieceWidth}%"></div>
+              </div>
+              <div class="bar-value">${item.orders} ped. · ${item.pieces} pçs</div>
             </div>
-            <div class="bar-value">${item.orders} ped. · ${item.pieces} pçs</div>
+            <div class="stage-orders">
+              ${stageOrders.length ? stageOrders.map(order => {
+                const badge = deliveryBadge(order);
+                return `
+                  <div class="stage-order">
+                    <div>
+                      <strong>${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</strong>
+                      <div class="small">${formatDate(order.dueDate)} · ${totalPieces(order)} peças</div>
+                    </div>
+                    <span class="pill ${badge.className}">${badge.text}</span>
+                  </div>
+                `;
+              }).join("") : `<div class="empty">Nenhum pedido nesta etapa.</div>`}
+            </div>
           </div>
         `;
       }).join("");
