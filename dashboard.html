@@ -56,8 +56,8 @@
       object-fit: contain;
       margin-bottom: 16px;
     }
-    h1 { font-size: clamp(34px, 3vw, 54px); line-height: 1; letter-spacing: 0; }
-    h2 { font-size: clamp(22px, 1.6vw, 31px); line-height: 1.08; }
+    h1 { font-size: clamp(28px, 2.5vw, 46px); line-height: 1.08; letter-spacing: 0; }
+    h2 { font-size: clamp(20px, 1.35vw, 27px); line-height: 1.16; }
     .muted, .small { color: var(--muted); line-height: 1.35; }
     .small { font-size: 13px; }
 
@@ -94,7 +94,7 @@
     .app {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: 310px 1fr;
+      grid-template-columns: 296px 1fr;
     }
     .sidebar {
       position: sticky;
@@ -123,7 +123,7 @@
     }
     .logo-lockup {
       display: grid;
-      grid-template-columns: 78px 1fr;
+      grid-template-columns: 70px minmax(0, 1fr);
       gap: 12px;
       align-items: center;
       position: relative;
@@ -136,8 +136,9 @@
     }
     .logo-lockup strong {
       display: block;
-      font-size: 28px;
-      line-height: .98;
+      font-size: 23px;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
       text-transform: uppercase;
     }
     .nav {
@@ -151,12 +152,12 @@
       color: #fff;
       text-decoration: none;
       display: grid;
-      grid-template-columns: 46px 1fr;
+      grid-template-columns: 42px minmax(0, 1fr);
       gap: 10px;
       align-items: center;
       padding: 13px 12px;
       border-radius: 16px;
-      min-height: 68px;
+      min-height: 62px;
     }
     .nav a.active, .nav a:hover {
       background: rgba(0, 55, 62, .38);
@@ -171,7 +172,7 @@
       background: rgba(255,255,255,.18);
       font-weight: 900;
     }
-    .nav strong { display: block; font-size: 22px; }
+    .nav strong { display: block; font-size: 18px; line-height: 1.15; overflow-wrap: anywhere; }
     .nav span { display: block; font-size: 14px; opacity: .86; margin-top: 2px; }
     .sidebar-foot {
       position: relative;
@@ -189,7 +190,7 @@
       color: #fff;
       padding: 26px 38px;
       display: grid;
-      grid-template-columns: minmax(360px, 640px) 1fr auto;
+      grid-template-columns: minmax(280px, 560px) minmax(80px, 1fr) minmax(250px, auto);
       gap: 24px;
       align-items: center;
       background:
@@ -231,7 +232,7 @@
       border: 0;
       background: transparent;
       min-height: 60px;
-      font-size: 21px;
+      font-size: 18px;
       box-shadow: none;
       outline: 0;
     }
@@ -255,23 +256,27 @@
     }
     .user-box {
       display: grid;
-      grid-template-columns: 1fr 72px;
+      grid-template-columns: minmax(0, 1fr) 62px;
       gap: 14px;
       align-items: center;
       text-align: right;
       padding-left: 20px;
       border-left: 1px solid rgba(255,255,255,.45);
     }
+    .user-box h2,
+    .user-box p {
+      overflow-wrap: anywhere;
+    }
     .avatar {
-      width: 72px;
-      height: 72px;
+      width: 62px;
+      height: 62px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f4c276, #fff);
       border: 3px solid rgba(255,255,255,.78);
       display: grid;
       place-items: center;
       color: var(--teal-dark);
-      font-size: 28px;
+      font-size: 23px;
       font-weight: 900;
     }
 
@@ -288,12 +293,12 @@
     }
     .metric-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(190px, 1fr));
       gap: 18px;
       margin-bottom: 22px;
     }
     .metric-card {
-      min-height: 178px;
+      min-height: 154px;
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,.75);
       background: rgba(255,255,255,.86);
@@ -302,7 +307,7 @@
       display: grid;
       align-content: start;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
     }
     .metric-card.coral { background: linear-gradient(135deg, #fb6d58, #ff9b75); color: #fff; }
     .metric-card.gold { background: linear-gradient(135deg, #e1ad4d, #f1d083); }
@@ -316,15 +321,19 @@
       bottom: -28px;
       background: rgba(255,255,255,.32);
     }
+    .metric-card > * {
+      min-width: 0;
+    }
     .metric-title {
       font-weight: 950;
-      font-size: 17px;
+      font-size: 14px;
+      line-height: 1.2;
       text-transform: uppercase;
       position: relative;
       z-index: 1;
     }
     .metric-value {
-      font-size: clamp(42px, 4.6vw, 72px);
+      font-size: clamp(30px, 3.1vw, 50px);
       font-weight: 950;
       line-height: 1;
       margin-top: 18px;
@@ -332,14 +341,15 @@
       z-index: 1;
     }
     .metric-note {
-      font-size: 19px;
+      font-size: 15px;
+      line-height: 1.25;
       margin-top: 4px;
       position: relative;
       z-index: 1;
     }
     .layout-grid {
       display: grid;
-      grid-template-columns: minmax(520px, 1.25fr) minmax(340px, .7fr) minmax(340px, .7fr);
+      grid-template-columns: minmax(480px, 1.15fr) minmax(300px, .72fr) minmax(320px, .78fr);
       gap: 18px;
       align-items: start;
     }
@@ -348,7 +358,7 @@
       background: rgba(255,255,255,.92);
       border: 1px solid rgba(255,255,255,.8);
       box-shadow: var(--shadow);
-      overflow: hidden;
+      overflow: visible;
     }
     .panel-head {
       padding: 20px 24px;
@@ -362,17 +372,20 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 16px;
+      font-size: 14px;
+      table-layout: auto;
     }
     th, td {
-      padding: 14px 10px;
+      padding: 12px 9px;
       text-align: left;
       border-bottom: 1px solid rgba(16,24,32,.08);
       vertical-align: middle;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
     }
     th {
       background: rgba(221, 211, 194, .42);
-      font-size: 14px;
+      font-size: 12px;
       text-transform: uppercase;
     }
     .pill {
@@ -382,7 +395,8 @@
       background: #d8f0f2;
       color: var(--teal-dark);
       font-weight: 900;
-      white-space: nowrap;
+      white-space: normal;
+      line-height: 1.15;
     }
     .pill.warn { background: #ffe4ad; color: #8a5b12; }
     .pill.done { background: #ccebd6; color: #18794e; }
@@ -413,7 +427,7 @@
     .production-cards {
       display: grid;
       gap: 14px;
-      max-height: 570px;
+      max-height: 620px;
       overflow: auto;
       padding-right: 4px;
     }
@@ -422,21 +436,29 @@
       border-radius: 16px;
       padding: 14px;
       display: grid;
-      grid-template-columns: 1fr 84px;
+      grid-template-columns: minmax(0, 1fr) 72px;
       gap: 12px;
       background: #fff;
     }
+    .production-card h3,
+    .production-card p {
+      overflow-wrap: anywhere;
+      line-height: 1.25;
+    }
+    .production-card p {
+      font-size: 14px;
+    }
     .production-card:nth-child(2n) { border-color: rgba(221,179,95,.9); }
     .product-thumb {
-      width: 84px;
-      height: 84px;
+      width: 72px;
+      height: 72px;
       border-radius: 14px;
       background: linear-gradient(135deg, #99d6d2, #ffe0b3);
       display: grid;
       place-items: center;
       color: var(--teal-dark);
       font-weight: 950;
-      font-size: 20px;
+      font-size: 17px;
     }
     .progress-line {
       height: 8px;
@@ -522,6 +544,7 @@
       <div class="sidebar-foot">
         <button class="btn" id="refreshBtn" type="button">Atualizar dados</button>
         <button class="btn" id="fullscreenBtn" type="button">Tela cheia</button>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
       </div>
     </aside>
 
@@ -651,6 +674,7 @@
       productionCards: document.querySelector("#productionCards"),
       refreshBtn: document.querySelector("#refreshBtn"),
       fullscreenBtn: document.querySelector("#fullscreenBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
       notificationBtn: document.querySelector("#notificationBtn"),
       helpBtn: document.querySelector("#helpBtn"),
       toast: document.querySelector("#toast")
@@ -681,6 +705,19 @@
       const passwordHash = await hashPassword(password, data.salt);
       if (passwordHash !== data.password_hash) return null;
       if (data.role === "cliente") throw new Error("Painel liberado apenas para operação e administração.");
+      return data;
+    }
+
+    async function getSessionUser() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data || data.role === "cliente") return null;
       return data;
     }
 
@@ -862,6 +899,15 @@
       el.avatar.textContent = name.slice(0, 2).toUpperCase();
     }
 
+    async function enterWithUser(user) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      setupUser(user);
+      document.body.classList.remove("auth-locked");
+      await refresh();
+      startRefresh();
+    }
+
     function showToast(message) {
       el.toast.textContent = message;
       el.toast.classList.add("show");
@@ -873,11 +919,7 @@
       try {
         const user = await validateUser(el.username.value, el.password.value);
         if (!user) throw new Error("Usuário ou senha inválidos.");
-        currentUser = user;
-        setupUser(user);
-        document.body.classList.remove("auth-locked");
-        await refresh();
-        startRefresh();
+        await enterWithUser(user);
       } catch (error) {
         showToast(error.message || "Não foi possível entrar.");
       }
@@ -892,8 +934,19 @@
       else document.exitFullscreen?.();
     });
 
+    el.logoutBtn.addEventListener("click", () => {
+      clearInterval(refreshTimer);
+      currentUser = null;
+      sessionStorage.removeItem("seamRioUser");
+      el.password.value = "";
+      document.body.classList.add("auth-locked");
+    });
+
     try {
       initSupabase();
+      getSessionUser().then(user => {
+        if (user) return enterWithUser(user);
+      }).catch(() => sessionStorage.removeItem("seamRioUser"));
     } catch (error) {
       showToast(error.message);
     }

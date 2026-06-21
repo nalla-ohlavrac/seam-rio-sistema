@@ -541,6 +541,14 @@
       return user;
     }
 
+    async function getSessionClient() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const user = await getUserByUsername(username);
+      if (!user || user.role !== "cliente" || !user.client_email) return null;
+      return user;
+    }
+
     async function loadClientOrders() {
       const { data, error } = await cloudDb
         .from(CLOUD_ORDER_TABLE)
@@ -726,6 +734,14 @@
       }).join("");
     }
 
+    async function enterWithClient(user) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      orders = await loadClientOrders();
+      clientRequests = await loadProductionRequests();
+      renderPortal();
+    }
+
     function renderProductionRequests() {
       if (!clientRequests.length) {
         el.productionRequestList.innerHTML = `<div class="empty">Nenhuma solicitação da produção no momento.</div>`;
@@ -785,10 +801,7 @@
       try {
         const user = await validateUser(el.username.value, el.password.value);
         if (!user) throw new Error("Usuário ou senha inválidos.");
-        currentUser = user;
-        orders = await loadClientOrders();
-        clientRequests = await loadProductionRequests();
-        renderPortal();
+        await enterWithClient(user);
       } catch (error) {
         showToast(error.message || "Não foi possível entrar.");
       }
@@ -883,6 +896,7 @@
 
     el.logoutBtn.addEventListener("click", () => {
       currentUser = null;
+      sessionStorage.removeItem("seamRioUser");
       orders = [];
       clientRequests = [];
       el.password.value = "";
@@ -895,6 +909,9 @@
       initSupabase();
       const urlUser = new URLSearchParams(window.location.search).get("usuario");
       if (urlUser) el.username.value = urlUser;
+      getSessionClient().then(user => {
+        if (user) return enterWithClient(user);
+      }).catch(() => sessionStorage.removeItem("seamRioUser"));
     } catch (error) {
       showToast(error.message);
     }

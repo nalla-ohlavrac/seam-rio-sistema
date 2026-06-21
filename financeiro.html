@@ -465,6 +465,19 @@
       return data;
     }
 
+    async function getSessionAdmin() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data || data.role !== "admin") return null;
+      return data;
+    }
+
     async function loadExpenses() {
       const { data, error } = await cloudDb
         .from(EXPENSE_TABLE)
@@ -689,6 +702,14 @@
       }
     }
 
+    async function enterWithAdmin(user) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      await refresh();
+      document.body.classList.remove("auth-locked");
+      runAutomaticAlert();
+    }
+
     function showToast(message) {
       el.toast.textContent = message;
       el.toast.classList.add("show");
@@ -700,10 +721,7 @@
       try {
         const user = await validateAdmin(el.username.value, el.password.value);
         if (!user) throw new Error("Usuário ou senha inválidos.");
-        currentUser = user;
-        await refresh();
-        document.body.classList.remove("auth-locked");
-        runAutomaticAlert();
+        await enterWithAdmin(user);
       } catch (error) {
         showToast(error.message || "Não foi possível entrar.");
       }
@@ -756,12 +774,16 @@
 
     el.logoutBtn.addEventListener("click", () => {
       currentUser = null;
+      sessionStorage.removeItem("seamRioUser");
       el.password.value = "";
       document.body.classList.add("auth-locked");
     });
 
     try {
       initSupabase();
+      getSessionAdmin().then(user => {
+        if (user) return enterWithAdmin(user);
+      }).catch(() => sessionStorage.removeItem("seamRioUser"));
     } catch (error) {
       showToast(error.message);
     }

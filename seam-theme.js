@@ -42,6 +42,7 @@
       <div class="seam-sidebar-foot">
         <button class="btn" type="button" data-seam-refresh>Atualizar</button>
         <button class="btn" type="button" data-seam-fullscreen>Tela cheia</button>
+        <button class="btn" type="button" data-seam-logout>Sair</button>
       </div>
     `;
     document.body.prepend(sidebar);
@@ -80,6 +81,12 @@
       button.addEventListener("click", () => {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
         else document.exitFullscreen?.();
+      });
+    });
+    document.querySelectorAll("[data-seam-logout]").forEach(button => {
+      button.addEventListener("click", () => {
+        sessionStorage.removeItem("seamRioUser");
+        location.href = "dashboard.html";
       });
     });
     document.querySelectorAll("[data-seam-alert]").forEach(button => {

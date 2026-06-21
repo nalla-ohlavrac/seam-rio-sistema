@@ -1636,6 +1636,24 @@
       };
     }
 
+    async function getSessionUser() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const user = await getUserByUsername(username);
+      if (!user || (user.role || "operador") === "cliente") return null;
+      const savedHash = user.passwordHash || user.password_hash;
+      return {
+        id: user.id,
+        username: user.username,
+        role: user.role || "operador",
+        clientName: user.clientName || user.client_name || "",
+        clientEmail: user.clientEmail || user.client_email || "",
+        salt: user.salt,
+        passwordHash: savedHash,
+        createdAt: user.createdAt || user.created_at
+      };
+    }
+
     async function unlockSystem(user) {
       currentUser = user;
       sessionStorage.setItem("seamRioUser", user.username);
@@ -1711,6 +1729,13 @@
     async function setupAuth() {
       const users = await normalizeUserRoles();
       const isFirstAccess = users.length === 0;
+      if (!isFirstAccess) {
+        const sessionUser = await getSessionUser();
+        if (sessionUser) {
+          await unlockSystem(sessionUser);
+          return;
+        }
+      }
       el.authTitle.textContent = isFirstAccess ? "Criar acesso" : "Acesso";
       el.authDescription.textContent = isFirstAccess
         ? "Cadastre o primeiro usuário e senha para proteger o sistema."
