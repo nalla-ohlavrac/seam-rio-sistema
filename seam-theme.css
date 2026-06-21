@@ -1,0 +1,325 @@
+:root {
+  --seam-teal: #008f8a;
+  --seam-teal-dark: #006c70;
+  --seam-teal-deep: #00565f;
+  --seam-coral: #f26d58;
+  --seam-gold: #ddb35f;
+  --seam-sand: #f4e6ce;
+  --seam-cream: #fffaf0;
+  --seam-ink: #101820;
+  --seam-muted: #667085;
+  --seam-line: rgba(16, 24, 32, .13);
+  --seam-shadow: 0 16px 38px rgba(16, 24, 32, .16);
+}
+
+body.seam-theme {
+  color: var(--seam-ink);
+  background:
+    radial-gradient(circle at 94% 9%, rgba(242, 109, 88, .16), transparent 15%),
+    radial-gradient(circle at 8% 94%, rgba(0, 143, 138, .13), transparent 18%),
+    linear-gradient(130deg, #ecf7f7 0%, #fff9ed 50%, #f3dfbf 100%) !important;
+}
+
+body.seam-theme.auth-locked .seam-global-sidebar,
+body.seam-theme.auth-locked .seam-global-topbar {
+  display: none;
+}
+
+.seam-global-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 310px;
+  z-index: 60;
+  background: linear-gradient(180deg, var(--seam-teal-dark), var(--seam-teal));
+  color: #fff;
+  padding: 28px 24px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 26px;
+  overflow: hidden;
+}
+
+.seam-global-sidebar::after {
+  content: "";
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  bottom: -18px;
+  height: 110px;
+  background:
+    radial-gradient(ellipse at 22% 35%, rgba(255,255,255,.28), transparent 38%),
+    radial-gradient(ellipse at 70% 25%, rgba(255,255,255,.18), transparent 42%);
+  opacity: .8;
+  pointer-events: none;
+}
+
+.seam-logo-lockup {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 12px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.seam-logo-lockup img {
+  width: 78px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.95);
+}
+
+.seam-logo-lockup strong {
+  display: block;
+  font-size: 28px;
+  line-height: .98;
+  text-transform: uppercase;
+}
+
+.seam-global-nav {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  position: relative;
+  z-index: 1;
+}
+
+.seam-global-nav a {
+  color: #fff;
+  text-decoration: none;
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 12px;
+  border-radius: 16px;
+  min-height: 68px;
+}
+
+.seam-global-nav a.active,
+.seam-global-nav a:hover {
+  background: rgba(0, 55, 62, .38);
+  box-shadow: inset 5px 0 0 var(--seam-coral);
+}
+
+.seam-nav-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.18);
+  font-weight: 900;
+}
+
+.seam-global-nav strong {
+  display: block;
+  font-size: 21px;
+}
+
+.seam-global-nav span span {
+  display: block;
+  font-size: 14px;
+  opacity: .86;
+  margin-top: 2px;
+}
+
+.seam-sidebar-foot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.seam-global-topbar {
+  position: fixed;
+  top: 0;
+  left: 310px;
+  right: 0;
+  min-height: 104px;
+  z-index: 55;
+  color: #fff;
+  padding: 20px 34px;
+  display: grid;
+  grid-template-columns: minmax(320px, 620px) 1fr auto;
+  gap: 24px;
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(0, 87, 97, .9), rgba(0, 87, 97, .25)),
+    radial-gradient(circle at 72% 45%, rgba(255,255,255,.33), transparent 22%),
+    linear-gradient(135deg, #147c8e 0%, #8fc3d6 52%, #4c6370 100%);
+  box-shadow: 0 12px 28px rgba(16, 24, 32, .12);
+}
+
+.seam-top-search {
+  min-height: 58px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.55);
+  background: rgba(255,255,255,.82);
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  color: #5c6672;
+  padding: 0 16px;
+  box-shadow: 0 10px 28px rgba(16, 24, 32, .12);
+}
+
+.seam-search-symbol {
+  width: 27px;
+  height: 27px;
+  border: 3px solid #687583;
+  border-radius: 50%;
+  position: relative;
+}
+
+.seam-search-symbol::after {
+  content: "";
+  width: 13px;
+  height: 3px;
+  background: #687583;
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  transform: rotate(45deg);
+  border-radius: 999px;
+}
+
+.seam-top-search input {
+  border: 0 !important;
+  background: transparent !important;
+  min-height: 54px !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  font-size: 19px !important;
+}
+
+.seam-top-actions {
+  justify-self: end;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.seam-round-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(255,255,255,.76);
+  color: #fff;
+  background: rgba(0,0,0,.08);
+  font-size: 19px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.seam-user-box {
+  display: grid;
+  grid-template-columns: 1fr 62px;
+  gap: 14px;
+  align-items: center;
+  text-align: right;
+  padding-left: 20px;
+  border-left: 1px solid rgba(255,255,255,.45);
+}
+
+.seam-user-box strong {
+  display: block;
+  font-size: 21px;
+}
+
+.seam-user-box span {
+  display: block;
+  opacity: .88;
+}
+
+.seam-avatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f4c276, #fff);
+  border: 3px solid rgba(255,255,255,.78);
+  display: grid;
+  place-items: center;
+  color: var(--seam-teal-dark);
+  font-size: 23px;
+  font-weight: 900;
+}
+
+body.seam-theme:not(.auth-locked) .app-shell,
+body.seam-theme:not(.auth-locked) .shell {
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 310px !important;
+  padding: 130px 34px 42px !important;
+}
+
+body.seam-theme:not(.auth-locked) .dashboard-shell {
+  width: auto !important;
+  max-width: none !important;
+  margin-left: 310px !important;
+  padding: 130px 34px 42px !important;
+}
+
+body.seam-theme .panel,
+body.seam-theme .metric,
+body.seam-theme .order-card,
+body.seam-theme .auth-card {
+  border-radius: 18px !important;
+  background: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(255,255,255,.78) !important;
+  box-shadow: var(--seam-shadow) !important;
+}
+
+body.seam-theme .panel-head {
+  border-bottom-color: var(--seam-line) !important;
+}
+
+body.seam-theme .btn,
+body.seam-theme button,
+body.seam-theme .pill {
+  border-radius: 12px;
+}
+
+body.seam-theme .btn.primary {
+  background: var(--seam-teal) !important;
+  border-color: var(--seam-teal) !important;
+}
+
+body.seam-theme input,
+body.seam-theme select,
+body.seam-theme textarea {
+  border-radius: 12px !important;
+}
+
+body.seam-theme .summary-grid,
+body.seam-theme .metric-grid {
+  gap: 18px !important;
+}
+
+@media (max-width: 1100px) {
+  .seam-global-sidebar,
+  .seam-global-topbar {
+    position: static;
+    width: auto;
+  }
+
+  .seam-global-topbar {
+    grid-template-columns: 1fr;
+    color: #fff;
+  }
+
+  .seam-user-box {
+    justify-self: start;
+    text-align: left;
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  body.seam-theme:not(.auth-locked) .app-shell,
+  body.seam-theme:not(.auth-locked) .shell,
+  body.seam-theme:not(.auth-locked) .dashboard-shell {
+    margin-left: 0 !important;
+    padding: 24px 16px 34px !important;
+  }
+}
