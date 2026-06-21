@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard de Produção - Seam Rio</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    :root {
+      --ink: #18212f;
+      --muted: #637083;
+      --line: #d8e2e7;
+      --soft: #e9f3f4;
+      --panel: rgba(255, 255, 255, .93);
+      --accent: #008f86;
+      --accent-dark: #006e69;
+      --gold: #c7923d;
+      --danger: #b42318;
+      --good: #18794e;
+      --shadow: 0 18px 48px rgba(31, 41, 51, .13);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(135deg, #dfeff0 0%, #f8fbfc 52%, #f3edf0 100%);
+    }
+    button, input { font: inherit; }
+    body.auth-locked .dashboard-shell { display: none; }
+    body:not(.auth-locked) .auth-gate { display: none; }
+
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .auth-card {
+      width: min(460px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+    .auth-card img {
+      width: 150px;
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      margin-bottom: 14px;
+    }
+    .field { display: grid; gap: 6px; margin-top: 12px; }
+    label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #5d6b82;
+    }
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px 12px;
+      color: var(--ink);
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      min-height: 42px;
+    }
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--accent-dark); }
+    .auth-card .btn { width: 100%; margin-top: 16px; }
+
+    .dashboard-shell {
+      width: min(1880px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .brand {
+      display: grid;
+      grid-template-columns: 128px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .brand-logo {
+      width: 128px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+    h1 {
+      font-size: clamp(34px, 4vw, 64px);
+      line-height: .96;
+      letter-spacing: 0;
+    }
+    .subtitle, .small {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .subtitle { font-size: clamp(16px, 1.2vw, 22px); margin-top: 8px; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .metric, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .metric {
+      padding: 16px;
+      min-height: 116px;
+      display: grid;
+      align-content: center;
+    }
+    .metric span {
+      color: var(--muted);
+      font-size: clamp(13px, 1vw, 18px);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .metric strong {
+      font-size: clamp(32px, 3.4vw, 62px);
+      line-height: 1;
+      margin-top: 8px;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.35fr) minmax(420px, .8fr);
+      gap: 14px;
+    }
+    .panel { overflow: hidden; }
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    h2 { font-size: clamp(22px, 1.8vw, 32px); }
+    .content {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .stage-list, .product-list, .urgent-list {
+      display: grid;
+      gap: 10px;
+    }
+    .stage-row {
+      display: grid;
+      grid-template-columns: 190px 1fr 130px;
+      gap: 12px;
+      align-items: center;
+      min-height: 64px;
+    }
+    .stage-name {
+      font-weight: 900;
+      font-size: clamp(16px, 1.1vw, 22px);
+    }
+    .bar-track {
+      position: relative;
+      height: 42px;
+      border-radius: 8px;
+      background: #eff5f6;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), #67b9b3);
+      transition: width .3s ease;
+    }
+    .bar-fill.pieces {
+      top: 55%;
+      height: 45%;
+      background: linear-gradient(90deg, var(--gold), #dfbd7f);
+    }
+    .bar-value {
+      font-weight: 900;
+      text-align: right;
+      font-size: clamp(17px, 1.2vw, 24px);
+    }
+    .product-row, .urgent-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px 14px;
+      min-height: 64px;
+    }
+    .product-row strong, .urgent-row strong {
+      font-size: clamp(17px, 1.2vw, 24px);
+    }
+    .pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(0, 127, 122, .11);
+      color: var(--accent);
+      font-size: clamp(12px, .9vw, 16px);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .pill.done { background: rgba(24, 121, 78, .12); color: var(--good); }
+    .pill.late { background: rgba(180, 35, 24, .11); color: var(--danger); }
+    .pill.warn { background: rgba(199, 146, 61, .16); color: #94631b; }
+    .empty {
+      padding: 28px 18px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .72);
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .2s ease;
+      pointer-events: none;
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1100px) {
+      header, main, .metrics, .brand { grid-template-columns: 1fr; }
+      .toolbar { justify-content: flex-start; }
+      .stage-row { grid-template-columns: 1fr; }
+      .bar-value { text-align: left; }
+    }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="auth-gate" aria-label="Acesso ao dashboard">
+    <div class="auth-card">
+      <img src="seam-rio-logo.png" alt="Seam Rio private label">
+      <h1>Dashboard</h1>
+      <p class="subtitle">Acesso para equipe de operação e administração.</p>
+      <form id="authForm">
+        <div class="field">
+          <label for="username">Usuário</label>
+          <input id="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="dashboard-shell">
+    <header>
+      <div class="brand">
+        <img class="brand-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+        <div>
+          <h1>Produção em tempo real</h1>
+          <p class="subtitle" id="updatedAt">Atualizando dados...</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="refreshBtn" type="button">Atualizar</button>
+        <button class="btn" id="fullscreenBtn" type="button">Tela cheia</button>
+        <button class="btn" id="productionBtn" type="button">Produção</button>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="metrics">
+      <div class="metric"><span>Pedidos ativos</span><strong id="activeOrders">0</strong></div>
+      <div class="metric"><span>Peças ativas</span><strong id="activePieces">0</strong></div>
+      <div class="metric"><span>Pedidos no prazo</span><strong id="onTimeOrders">0</strong></div>
+      <div class="metric"><span>Atrasados</span><strong id="lateOrders">0</strong></div>
+      <div class="metric"><span>Entregas 7 dias</span><strong id="dueSoon">0</strong></div>
+    </section>
+
+    <main>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Etapas da produção</h2>
+          <span class="small">Barras superiores: pedidos · inferiores: peças</span>
+        </div>
+        <div class="content">
+          <div class="stage-list" id="stageList"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Quantidades</h2>
+          <span class="small">Peças por tipo</span>
+        </div>
+        <div class="content">
+          <div class="product-list" id="productList"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Próximas entregas</h2>
+          <span class="small">Prioridade de produção</span>
+        </div>
+        <div class="content">
+          <div class="urgent-list" id="urgentList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const ORDER_TABLE = "orders";
+    const USER_TABLE = "app_users";
+    const REFRESH_MS = 30000;
+    const stages = [
+      { id: "pilotagem", label: "Pilotagem" },
+      { id: "inicio-producao", label: "Início produção" },
+      { id: "arremate", label: "Arremate" },
+      { id: "finalizacao", label: "Finalização" },
+      { id: "entrega", label: "Entrega" },
+      { id: "pagamento", label: "Pagamento" }
+    ];
+
+    let cloudDb = null;
+    let currentUser = null;
+    let orders = [];
+    let refreshTimer = null;
+
+    const el = {
+      authForm: document.querySelector("#authForm"),
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      updatedAt: document.querySelector("#updatedAt"),
+      activeOrders: document.querySelector("#activeOrders"),
+      activePieces: document.querySelector("#activePieces"),
+      onTimeOrders: document.querySelector("#onTimeOrders"),
+      lateOrders: document.querySelector("#lateOrders"),
+      dueSoon: document.querySelector("#dueSoon"),
+      stageList: document.querySelector("#stageList"),
+      productList: document.querySelector("#productList"),
+      urgentList: document.querySelector("#urgentList"),
+      refreshBtn: document.querySelector("#refreshBtn"),
+      fullscreenBtn: document.querySelector("#fullscreenBtn"),
+      productionBtn: document.querySelector("#productionBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      toast: document.querySelector("#toast")
+    };
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) {
+        throw new Error("Supabase não configurado.");
+      }
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function validateUser(username, password) {
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const passwordHash = await hashPassword(password, data.salt);
+      if (passwordHash !== data.password_hash) return null;
+      if (data.role === "cliente") throw new Error("Dashboard liberado apenas para operação e administração.");
+      return data;
+    }
+
+    async function loadOrders() {
+      const { data, error } = await cloudDb
+        .from(ORDER_TABLE)
+        .select("payload")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      orders = (data || []).map(row => row.payload || {});
+    }
+
+    function totalPieces(order) {
+      return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0) + Number(order.qtyOthers || 0);
+    }
+
+    function isActive(order) {
+      return !["entrega", "pagamento"].includes(order.stage);
+    }
+
+    function daysUntil(value) {
+      if (!value) return null;
+      const due = new Date(value + "T00:00:00");
+      const now = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00");
+      return Math.ceil((due - now) / (24 * 60 * 60 * 1000));
+    }
+
+    function deliveryBadge(order) {
+      if (!order.dueDate) return { text: "sem prazo", className: "" };
+      const days = daysUntil(order.dueDate);
+      if (days < 0) return { text: `${Math.abs(days)}d atraso`, className: "late" };
+      if (days === 0) return { text: "hoje", className: "warn" };
+      if (days <= 7) return { text: `${days}d`, className: "warn" };
+      return { text: `${days}d`, className: "" };
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sem data";
+      return new Date(value + "T00:00:00").toLocaleDateString("pt-BR");
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function renderMetrics() {
+      const active = orders.filter(isActive);
+      const late = active.filter(order => daysUntil(order.dueDate) < 0);
+      const dueSoon = active.filter(order => {
+        const days = daysUntil(order.dueDate);
+        return days !== null && days >= 0 && days <= 7;
+      });
+      el.activeOrders.textContent = active.length;
+      el.activePieces.textContent = active.reduce((sum, order) => sum + totalPieces(order), 0);
+      el.onTimeOrders.textContent = active.length - late.length;
+      el.lateOrders.textContent = late.length;
+      el.dueSoon.textContent = dueSoon.length;
+    }
+
+    function renderStages() {
+      const totals = stages.map(stage => {
+        const stageOrders = orders.filter(order => order.stage === stage.id);
+        return {
+          ...stage,
+          orders: stageOrders.length,
+          pieces: stageOrders.reduce((sum, order) => sum + totalPieces(order), 0)
+        };
+      });
+      const maxOrders = Math.max(1, ...totals.map(item => item.orders));
+      const maxPieces = Math.max(1, ...totals.map(item => item.pieces));
+      el.stageList.innerHTML = totals.map(item => {
+        const orderWidth = Math.max(item.orders ? 4 : 0, (item.orders / maxOrders) * 100);
+        const pieceWidth = Math.max(item.pieces ? 4 : 0, (item.pieces / maxPieces) * 100);
+        return `
+          <div class="stage-row">
+            <div class="stage-name">${escapeHtml(item.label)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${orderWidth}%"></div>
+              <div class="bar-fill pieces" style="width:${pieceWidth}%"></div>
+            </div>
+            <div class="bar-value">${item.orders} ped. · ${item.pieces} pçs</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderProducts() {
+      const totals = [
+        { label: "Calcinhas", value: orders.reduce((sum, order) => sum + Number(order.qtyBottoms || 0), 0) },
+        { label: "Tops", value: orders.reduce((sum, order) => sum + Number(order.qtyTops || 0), 0) },
+        { label: "Saídas de praia", value: orders.reduce((sum, order) => sum + Number(order.qtyCoverups || 0), 0) },
+        { label: "Outros", value: orders.reduce((sum, order) => sum + Number(order.qtyOthers || 0), 0) }
+      ];
+      const byProduct = new Map();
+      orders.forEach(order => {
+        const name = order.productName || order.productType || "";
+        if (!name) return;
+        byProduct.set(name, (byProduct.get(name) || 0) + totalPieces(order));
+      });
+      const productRows = Array.from(byProduct.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([label, value]) => ({ label, value }));
+      el.productList.innerHTML = [...totals, ...productRows].map(item => `
+        <div class="product-row">
+          <strong>${escapeHtml(item.label)}</strong>
+          <span class="pill">${item.value} peças</span>
+        </div>
+      `).join("");
+    }
+
+    function renderUrgent() {
+      const urgent = orders
+        .filter(isActive)
+        .filter(order => order.dueDate)
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+        .slice(0, 8);
+      if (!urgent.length) {
+        el.urgentList.innerHTML = `<div class="empty">Nenhuma entrega com prazo informado.</div>`;
+        return;
+      }
+      el.urgentList.innerHTML = urgent.map(order => {
+        const badge = deliveryBadge(order);
+        return `
+          <div class="urgent-row">
+            <div>
+              <strong>${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</strong>
+              <div class="small">${formatDate(order.dueDate)} · ${totalPieces(order)} peças · ${escapeHtml(order.productName || order.stage || "")}</div>
+            </div>
+            <span class="pill ${badge.className}">${badge.text}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function render() {
+      renderMetrics();
+      renderStages();
+      renderProducts();
+      renderUrgent();
+      el.updatedAt.textContent = `Atualizado em ${new Date().toLocaleString("pt-BR")} · próxima atualização automática em 30s`;
+    }
+
+    async function refresh() {
+      await loadOrders();
+      render();
+    }
+
+    function startRefresh() {
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => {
+        refresh().catch(error => showToast(error.message || "Não foi possível atualizar."));
+      }, REFRESH_MS);
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 3000);
+    }
+
+    el.authForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const user = await validateUser(el.username.value, el.password.value);
+        if (!user) throw new Error("Usuário ou senha inválidos.");
+        currentUser = user;
+        document.body.classList.remove("auth-locked");
+        await refresh();
+        startRefresh();
+      } catch (error) {
+        showToast(error.message || "Não foi possível entrar.");
+      }
+    });
+
+    el.refreshBtn.addEventListener("click", () => {
+      refresh().catch(error => showToast(error.message || "Não foi possível atualizar."));
+    });
+
+    el.fullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    el.productionBtn.addEventListener("click", () => {
+      window.location.href = "producao.html";
+    });
+
+    el.logoutBtn.addEventListener("click", () => {
+      clearInterval(refreshTimer);
+      currentUser = null;
+      el.password.value = "";
+      document.body.classList.add("auth-locked");
+    });
+
+    try {
+      initSupabase();
+    } catch (error) {
+      showToast(error.message);
+    }
+  </script>
+</body>
+</html>
