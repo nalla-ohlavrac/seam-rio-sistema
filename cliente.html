@@ -460,6 +460,7 @@
     const CLOUD_ORDER_TABLE = "orders";
     const CLOUD_USER_TABLE = "app_users";
     const CLOUD_REQUEST_TABLE = "client_requests";
+    const CLOUD_AUDIT_TABLE = "audit_logs";
     const stages = [
       { id: "pilotagem", label: "Pilotagem" },
       { id: "inicio-producao", label: "Início de produção" },
@@ -547,6 +548,25 @@
       const user = await getUserByUsername(username);
       if (!user || user.role !== "cliente" || !user.client_email) return null;
       return user;
+    }
+
+    async function logAudit(action, entity = "", entityId = "", description = "", payload = {}) {
+      if (!cloudDb) return;
+      try {
+        await cloudDb.from(CLOUD_AUDIT_TABLE).insert({
+          id: crypto.randomUUID(),
+          username: currentUser?.username || sessionStorage.getItem("seamRioUser") || "",
+          role: currentUser?.role || "",
+          action,
+          entity,
+          entity_id: String(entityId || ""),
+          description,
+          page: location.pathname.split("/").pop() || "cliente.html",
+          payload
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel registrar auditoria.", error);
+      }
     }
 
     async function loadClientOrders() {
@@ -734,9 +754,10 @@
       }).join("");
     }
 
-    async function enterWithClient(user) {
+    async function enterWithClient(user, logLogin = false) {
       currentUser = user;
       sessionStorage.setItem("seamRioUser", user.username);
+      if (logLogin) await logAudit("login", CLOUD_USER_TABLE, user.id, "Login na area do cliente");
       orders = await loadClientOrders();
       clientRequests = await loadProductionRequests();
       renderPortal();
@@ -780,6 +801,10 @@
             const response = textarea.value.trim();
             if (!response) throw new Error("Digite sua resposta.");
             await answerProductionRequest(requestId, response);
+            await logAudit("update", CLOUD_REQUEST_TABLE, requestId, "Cliente respondeu solicitacao da producao", {
+              responseLength: response.length,
+              clientEmail: currentUser.client_email
+            });
             clientRequests = await loadProductionRequests();
             renderProductionRequests();
             showToast("Resposta enviada para a produção.");
@@ -801,7 +826,7 @@
       try {
         const user = await validateUser(el.username.value, el.password.value);
         if (!user) throw new Error("Usuário ou senha inválidos.");
-        await enterWithClient(user);
+        await enterWithClient(user, true);
       } catch (error) {
         showToast(error.message || "Não foi possível entrar.");
       }
@@ -849,7 +874,14 @@
         };
         order.totalPieces = totalPieces(order);
         await saveNewOrder(order);
-        await saveClientRequest({
+        await logAudit("insert", CLOUD_ORDER_TABLE, order.id, "Pedido criado pelo cliente", {
+          orderNumber: order.orderNumber,
+          productName: order.productName,
+          productType: order.productType,
+          quantity,
+          clientEmail: currentUser.client_email
+        });
+        const request = {
           id: crypto.randomUUID(),
           order_id: order.id,
           order_number: order.orderNumber,
@@ -859,6 +891,11 @@
           message: `Novo pedido: ${order.productName}. ${order.notes || ""}`,
           status: "pendente",
           created_at: new Date().toISOString()
+        };
+        await saveClientRequest(request);
+        await logAudit("insert", CLOUD_REQUEST_TABLE, request.id, "Solicitacao de novo pedido criada pelo cliente", {
+          orderNumber: request.order_number,
+          clientEmail: request.client_email
         });
         orders = await loadClientOrders();
         el.newOrderForm.reset();
@@ -875,7 +912,7 @@
       try {
         const order = orders.find(item => item.id === el.requestOrder.value);
         if (!order) throw new Error("Selecione um pedido.");
-        await saveClientRequest({
+        const request = {
           id: crypto.randomUUID(),
           order_id: order.id,
           order_number: order.orderNumber,
@@ -885,6 +922,12 @@
           message: el.requestMessage.value.trim(),
           status: "pendente",
           created_at: new Date().toISOString()
+        };
+        await saveClientRequest(request);
+        await logAudit("insert", CLOUD_REQUEST_TABLE, request.id, "Solicitacao enviada pelo cliente", {
+          orderNumber: request.order_number,
+          type: request.type,
+          clientEmail: request.client_email
         });
         el.requestMessage.value = "";
         el.requestType.value = "mensagem";

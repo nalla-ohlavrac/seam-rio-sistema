@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auditoria | Seam Rio Confecção</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <link rel="stylesheet" href="seam-theme.css">
+  <style>
+    :root {
+      --teal: #078b86;
+      --ink: #132233;
+      --muted: #607089;
+      --line: #d7e2ea;
+      --panel: rgba(255, 255, 255, 0.93);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #dceff0 0%, #f8efe2 100%);
+    }
+
+    .auth-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #dceff0 0%, #f7f1ea 100%);
+    }
+    body.auth-locked .auth-screen { display: flex; }
+    .auth-card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 18px 45px rgba(19, 34, 51, 0.12);
+    }
+    .auth-card {
+      width: min(520px, 100%);
+      padding: 28px;
+    }
+    .auth-card img { width: 160px; margin-bottom: 14px; }
+    h1, h2 { margin: 0; }
+    .muted { color: var(--muted); }
+    .field { display: grid; gap: 6px; margin-top: 14px; }
+    label {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    input, select {
+      min-height: 44px;
+      border: 1px solid #cfdbe5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      background: white;
+    }
+    .btn {
+      min-height: 44px;
+      border: 1px solid #cfdbe5;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font: inherit;
+      cursor: pointer;
+      background: white;
+    }
+    .btn.primary {
+      border-color: var(--teal);
+      background: var(--teal);
+      color: white;
+      font-weight: 800;
+    }
+    .page {
+      padding: 34px;
+    }
+    .panel {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 0.8fr) minmax(120px, 0.7fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e3ebf0;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.92rem;
+    }
+    th {
+      font-size: 0.74rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #e8f4f4;
+      color: #056c68;
+      font-weight: 800;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      max-width: 420px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      color: white;
+      background: #132233;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.2s ease;
+      pointer-events: none;
+      z-index: 30;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 800px) {
+      .page { padding: 18px; }
+      .filters { grid-template-columns: 1fr; }
+      .panel-head { display: block; }
+    }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="auth-screen">
+    <form class="auth-card" id="authForm">
+      <img src="seam-rio-logo.png" alt="Seam Rio">
+      <h1>Auditoria</h1>
+      <p class="muted">Acesso exclusivo para administrador.</p>
+      <div class="field">
+        <label for="username">Usuário</label>
+        <input id="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <button class="btn primary" type="submit">Entrar</button>
+      </div>
+    </form>
+  </section>
+
+  <main class="page">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h1>Registro de atividades</h1>
+          <p class="muted">Logins, pedidos, usuários, solicitações e lançamentos financeiros.</p>
+        </div>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
+      </div>
+      <div class="filters">
+        <div class="field">
+          <label for="searchInput">Pesquisar</label>
+          <input id="searchInput" placeholder="Usuário, descrição, pedido, cliente...">
+        </div>
+        <div class="field">
+          <label for="actionFilter">Ação</label>
+          <select id="actionFilter">
+            <option value="">Todas</option>
+            <option value="login">Login</option>
+            <option value="insert">Inserção</option>
+            <option value="update">Alteração</option>
+            <option value="import">Importação</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="limitSelect">Mostrar</label>
+          <select id="limitSelect">
+            <option value="50">50 registros</option>
+            <option value="100">100 registros</option>
+            <option value="200">200 registros</option>
+          </select>
+        </div>
+        <button class="btn primary" id="refreshBtn" type="button">Atualizar</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Usuário</th>
+              <th>Ação</th>
+              <th>Origem</th>
+              <th>Descrição</th>
+              <th>Referência</th>
+            </tr>
+          </thead>
+          <tbody id="auditRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const USER_TABLE = "app_users";
+    const AUDIT_TABLE = "audit_logs";
+    let cloudDb = null;
+    let currentUser = null;
+    let logs = [];
+
+    const el = {
+      authForm: document.querySelector("#authForm"),
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      searchInput: document.querySelector("#searchInput"),
+      actionFilter: document.querySelector("#actionFilter"),
+      limitSelect: document.querySelector("#limitSelect"),
+      refreshBtn: document.querySelector("#refreshBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      auditRows: document.querySelector("#auditRows"),
+      toast: document.querySelector("#toast")
+    };
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) throw new Error("Supabase nao configurado.");
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function validateAdmin(username, password) {
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const passwordHash = await hashPassword(password, data.salt);
+      if (passwordHash !== data.password_hash) return null;
+      if (data.role !== "admin") throw new Error("Acesso permitido somente para administrador.");
+      return data;
+    }
+
+    async function getSessionAdmin() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data || data.role !== "admin") return null;
+      return data;
+    }
+
+    async function logAudit(action, entity = "", entityId = "", description = "", payload = {}) {
+      try {
+        await cloudDb.from(AUDIT_TABLE).insert({
+          id: crypto.randomUUID(),
+          username: currentUser?.username || sessionStorage.getItem("seamRioUser") || "",
+          role: currentUser?.role || "",
+          action,
+          entity,
+          entity_id: String(entityId || ""),
+          description,
+          page: "auditoria.html",
+          payload
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel registrar auditoria.", error);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function actionLabel(action) {
+      return {
+        login: "Login",
+        insert: "Inserção",
+        update: "Alteração",
+        import: "Importação"
+      }[action] || action || "-";
+    }
+
+    async function loadLogs() {
+      const limit = Number(el.limitSelect.value || 50);
+      let query = cloudDb
+        .from(AUDIT_TABLE)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (el.actionFilter.value) query = query.eq("action", el.actionFilter.value);
+      const { data, error } = await query;
+      if (error) throw error;
+      logs = data || [];
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const term = el.searchInput.value.trim().toLowerCase();
+      const rows = logs.filter(log => {
+        if (!term) return true;
+        return [
+          log.username,
+          log.role,
+          log.action,
+          log.entity,
+          log.entity_id,
+          log.description,
+          log.page,
+          JSON.stringify(log.payload || {})
+        ].join(" ").toLowerCase().includes(term);
+      });
+
+      if (!rows.length) {
+        el.auditRows.innerHTML = `<tr><td colspan="6">Nenhum registro encontrado.</td></tr>`;
+        return;
+      }
+
+      el.auditRows.innerHTML = rows.map(log => `
+        <tr>
+          <td>${log.created_at ? new Date(log.created_at).toLocaleString("pt-BR") : ""}</td>
+          <td><strong>${escapeHtml(log.username || "-")}</strong><br><span class="muted">${escapeHtml(log.role || "")}</span></td>
+          <td><span class="pill">${escapeHtml(actionLabel(log.action))}</span></td>
+          <td>${escapeHtml(log.page || "")}<br><span class="muted">${escapeHtml(log.entity || "")}</span></td>
+          <td>${escapeHtml(log.description || "")}</td>
+          <td>${escapeHtml(log.entity_id || "")}</td>
+        </tr>
+      `).join("");
+    }
+
+    async function enterWithAdmin(user, logLogin = false) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      if (logLogin) await logAudit("login", USER_TABLE, user.id, "Login na auditoria");
+      document.body.classList.remove("auth-locked");
+      await loadLogs();
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 3000);
+    }
+
+    el.authForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const user = await validateAdmin(el.username.value, el.password.value);
+        if (!user) throw new Error("Usuario ou senha invalidos.");
+        await enterWithAdmin(user, true);
+      } catch (error) {
+        showToast(error.message || "Nao foi possivel entrar.");
+      }
+    });
+
+    el.refreshBtn.addEventListener("click", () => {
+      loadLogs().catch(error => showToast(error.message || "Nao foi possivel atualizar."));
+    });
+    el.searchInput.addEventListener("input", renderLogs);
+    el.actionFilter.addEventListener("change", () => loadLogs().catch(error => showToast(error.message)));
+    el.limitSelect.addEventListener("change", () => loadLogs().catch(error => showToast(error.message)));
+    el.logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      sessionStorage.removeItem("seamRioUser");
+      el.password.value = "";
+      document.body.classList.add("auth-locked");
+    });
+
+    try {
+      initSupabase();
+      getSessionAdmin().then(user => {
+        if (user) return enterWithAdmin(user);
+      }).catch(() => sessionStorage.removeItem("seamRioUser"));
+    } catch (error) {
+      showToast(error.message);
+    }
+  </script>
+  <script src="seam-theme.js"></script>
+</body>
+</html>

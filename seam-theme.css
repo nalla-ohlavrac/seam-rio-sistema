@@ -15,9 +15,8 @@
 body.seam-theme {
   color: var(--seam-ink);
   background:
-    radial-gradient(circle at 94% 9%, rgba(242, 109, 88, .16), transparent 15%),
-    radial-gradient(circle at 8% 94%, rgba(0, 143, 138, .13), transparent 18%),
-    linear-gradient(130deg, #ecf7f7 0%, #fff9ed 50%, #f3dfbf 100%) !important;
+    linear-gradient(90deg, rgba(255, 250, 239, .74), rgba(255, 250, 239, .42)),
+    url("seam-rio-fundo.png") center center / cover fixed no-repeat !important;
 }
 
 body.seam-theme.auth-locked .seam-global-sidebar,
@@ -25,14 +24,20 @@ body.seam-theme.auth-locked .seam-global-topbar {
   display: none;
 }
 
+body.seam-theme [hidden] {
+  display: none !important;
+}
+
 .seam-global-sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 310px;
+  width: 296px;
   z-index: 60;
-  background: linear-gradient(180deg, var(--seam-teal-dark), var(--seam-teal));
+  background:
+    linear-gradient(180deg, rgba(0, 70, 78, .95), rgba(0, 117, 112, .88)),
+    url("seam-rio-fundo.png") 20% center / cover no-repeat;
   color: #fff;
-  padding: 28px 24px;
+  padding: 24px 20px;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 26px;
@@ -55,7 +60,7 @@ body.seam-theme.auth-locked .seam-global-topbar {
 
 .seam-logo-lockup {
   display: grid;
-  grid-template-columns: 78px 1fr;
+  grid-template-columns: 70px minmax(0, 1fr);
   gap: 12px;
   align-items: center;
   position: relative;
@@ -70,8 +75,9 @@ body.seam-theme.auth-locked .seam-global-topbar {
 
 .seam-logo-lockup strong {
   display: block;
-  font-size: 28px;
-  line-height: .98;
+  font-size: 23px;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
 }
 
@@ -87,12 +93,12 @@ body.seam-theme.auth-locked .seam-global-topbar {
   color: #fff;
   text-decoration: none;
   display: grid;
-  grid-template-columns: 46px 1fr;
+  grid-template-columns: 42px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   padding: 13px 12px;
   border-radius: 16px;
-  min-height: 68px;
+  min-height: 62px;
 }
 
 .seam-global-nav a.active,
@@ -113,7 +119,9 @@ body.seam-theme.auth-locked .seam-global-topbar {
 
 .seam-global-nav strong {
   display: block;
-  font-size: 21px;
+  font-size: 18px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .seam-global-nav span span {
@@ -133,20 +141,19 @@ body.seam-theme.auth-locked .seam-global-topbar {
 .seam-global-topbar {
   position: fixed;
   top: 0;
-  left: 310px;
+  left: 296px;
   right: 0;
-  min-height: 104px;
+  min-height: 96px;
   z-index: 55;
   color: #fff;
-  padding: 20px 34px;
+  padding: 18px 30px;
   display: grid;
-  grid-template-columns: minmax(320px, 620px) 1fr auto;
+  grid-template-columns: minmax(260px, 540px) minmax(80px, 1fr) minmax(230px, auto);
   gap: 24px;
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(0, 87, 97, .9), rgba(0, 87, 97, .25)),
-    radial-gradient(circle at 72% 45%, rgba(255,255,255,.33), transparent 22%),
-    linear-gradient(135deg, #147c8e 0%, #8fc3d6 52%, #4c6370 100%);
+    linear-gradient(90deg, rgba(0, 47, 56, .88), rgba(0, 47, 56, .22) 55%, rgba(18, 31, 34, .55)),
+    url("seam-rio-banner.png") center center / cover no-repeat;
   box-shadow: 0 12px 28px rgba(16, 24, 32, .12);
 }
 
@@ -189,7 +196,7 @@ body.seam-theme.auth-locked .seam-global-topbar {
   min-height: 54px !important;
   box-shadow: none !important;
   outline: 0 !important;
-  font-size: 19px !important;
+  font-size: 17px !important;
 }
 
 .seam-top-actions {
@@ -215,7 +222,7 @@ body.seam-theme.auth-locked .seam-global-topbar {
 
 .seam-user-box {
   display: grid;
-  grid-template-columns: 1fr 62px;
+  grid-template-columns: minmax(0, 1fr) 58px;
   gap: 14px;
   align-items: center;
   text-align: right;
@@ -225,24 +232,27 @@ body.seam-theme.auth-locked .seam-global-topbar {
 
 .seam-user-box strong {
   display: block;
-  font-size: 21px;
+  font-size: 18px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .seam-user-box span {
   display: block;
   opacity: .88;
+  overflow-wrap: anywhere;
 }
 
 .seam-avatar {
-  width: 62px;
-  height: 62px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f4c276, #fff);
   border: 3px solid rgba(255,255,255,.78);
   display: grid;
   place-items: center;
   color: var(--seam-teal-dark);
-  font-size: 23px;
+  font-size: 20px;
   font-weight: 900;
 }
 
@@ -250,15 +260,45 @@ body.seam-theme:not(.auth-locked) .app-shell,
 body.seam-theme:not(.auth-locked) .shell {
   width: auto !important;
   max-width: none !important;
-  margin-left: 310px !important;
-  padding: 130px 34px 42px !important;
+  margin-left: 296px !important;
+  padding: 122px 30px 42px !important;
 }
 
 body.seam-theme:not(.auth-locked) .dashboard-shell {
   width: auto !important;
   max-width: none !important;
-  margin-left: 310px !important;
-  padding: 130px 34px 42px !important;
+  margin-left: 296px !important;
+  padding: 122px 30px 42px !important;
+}
+
+body.seam-theme.seam-client-portal .seam-global-sidebar,
+body.seam-theme.seam-client-portal .seam-global-topbar {
+  display: none !important;
+}
+
+body.seam-theme.seam-client-portal:not(.auth-locked) .shell {
+  width: min(1180px, calc(100vw - 32px)) !important;
+  max-width: 1180px !important;
+  margin: 0 auto !important;
+  padding: 28px 0 42px !important;
+}
+
+body.seam-theme:not(.auth-locked) .app-shell::before,
+body.seam-theme:not(.auth-locked) .shell::before,
+body.seam-theme:not(.auth-locked) .dashboard-shell::before,
+body.seam-theme:not(.auth-locked) .page::before,
+body.seam-theme:not(.auth-locked) .portal::before {
+  content: "";
+  display: block;
+  width: 100%;
+  min-height: clamp(150px, 17vw, 260px);
+  margin-bottom: 22px;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(0, 47, 56, .08), rgba(255, 250, 239, .12)),
+    url("seam-rio-banner.png") center center / cover no-repeat;
+  box-shadow: 0 18px 45px rgba(16, 24, 32, .18);
+  border: 1px solid rgba(255,255,255,.42);
 }
 
 body.seam-theme .panel,
@@ -266,19 +306,135 @@ body.seam-theme .metric,
 body.seam-theme .order-card,
 body.seam-theme .auth-card {
   border-radius: 18px !important;
-  background: rgba(255,255,255,.92) !important;
+  background: rgba(255,255,255,.76) !important;
   border: 1px solid rgba(255,255,255,.78) !important;
   box-shadow: var(--seam-shadow) !important;
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
+}
+
+body.seam-theme .auth-gate,
+body.seam-theme .auth-screen {
+  background:
+    linear-gradient(90deg, rgba(255,250,239,.76), rgba(255,250,239,.5)),
+    url("seam-rio-fundo.png") center center / cover fixed no-repeat !important;
+}
+
+body.seam-theme .app-shell > header,
+body.seam-theme .shell > header,
+body.seam-theme .dashboard-shell > .topbar,
+body.seam-theme .topbar {
+  background:
+    linear-gradient(90deg, rgba(0, 47, 56, .84), rgba(0, 47, 56, .18) 58%, rgba(18, 31, 34, .48)),
+    url("seam-rio-banner.png") center center / cover no-repeat !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 45px rgba(16, 24, 32, .18) !important;
+}
+
+body.seam-theme .brand-block,
+body.seam-theme .topbar {
+  text-shadow: 0 2px 10px rgba(0,0,0,.32);
+}
+
+body.seam-theme .brand-logo,
+body.seam-theme .auth-card img,
+body.seam-theme .seam-logo-lockup img {
+  background: rgba(255,255,255,.88) !important;
+  box-shadow: 0 10px 28px rgba(16, 24, 32, .16);
+}
+
+body.seam-theme .summary-grid .metric,
+body.seam-theme .metric-grid .metric,
+body.seam-theme .metrics .metric {
+  background: rgba(255,255,255,.72) !important;
+}
+
+body.seam-theme table,
+body.seam-theme .order-list,
+body.seam-theme .user-list,
+body.seam-theme .request-list,
+body.seam-theme .product-list {
+  background: rgba(255,255,255,.36);
+  border-radius: 14px;
+}
+
+body.seam-theme .app-shell > header,
+body.seam-theme .shell > header {
+  background: rgba(255,255,255,.62) !important;
+  color: var(--seam-ink) !important;
+  text-shadow: none !important;
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
+  display: grid !important;
+  grid-template-columns: minmax(430px, 1fr) minmax(360px, auto) !important;
+  align-items: center !important;
+  gap: 22px !important;
+  padding: 18px !important;
+}
+
+body.seam-theme .brand-block {
+  grid-template-columns: clamp(92px, 9vw, 132px) minmax(300px, 1fr) !important;
+  align-items: center !important;
+  min-width: 0;
+}
+
+body.seam-theme .brand-logo {
+  width: 100% !important;
+  max-width: 132px !important;
+}
+
+body.seam-theme .brand-block h1 {
+  font-size: clamp(28px, 2.8vw, 42px) !important;
+  line-height: 1.05 !important;
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  max-width: 760px;
+}
+
+body.seam-theme .brand-block .subtitle {
+  max-width: 720px !important;
+}
+
+body.seam-theme .toolbar {
+  justify-content: flex-end !important;
+  align-content: center !important;
 }
 
 body.seam-theme .panel-head {
   border-bottom-color: var(--seam-line) !important;
 }
 
+body.seam-theme h1,
+body.seam-theme h2,
+body.seam-theme h3,
+body.seam-theme strong,
+body.seam-theme .order-title,
+body.seam-theme .small {
+  overflow-wrap: break-word;
+}
+
 body.seam-theme .btn,
 body.seam-theme button,
 body.seam-theme .pill {
   border-radius: 12px;
+}
+
+body.seam-theme .pill {
+  white-space: normal !important;
+  line-height: 1.15;
+}
+
+body.seam-theme table {
+  table-layout: auto;
+}
+
+body.seam-theme th,
+body.seam-theme td {
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 
 body.seam-theme .btn.primary {
@@ -321,5 +477,34 @@ body.seam-theme .metric-grid {
   body.seam-theme:not(.auth-locked) .dashboard-shell {
     margin-left: 0 !important;
     padding: 24px 16px 34px !important;
+  }
+
+  body.seam-theme .app-shell > header,
+  body.seam-theme .shell > header {
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+  }
+
+  body.seam-theme .brand-block {
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+  }
+
+  body.seam-theme .toolbar {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body.seam-theme .brand-block {
+    grid-template-columns: 76px minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  body.seam-theme .brand-block h1 {
+    font-size: 26px !important;
+  }
+
+  body.seam-theme .brand-block .subtitle {
+    font-size: 14px !important;
   }
 }

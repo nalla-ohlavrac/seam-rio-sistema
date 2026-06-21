@@ -1097,6 +1097,7 @@
     const CLOUD_USER_TABLE = "app_users";
     const CLOUD_PRODUCT_TABLE = "products";
     const CLOUD_REQUEST_TABLE = "client_requests";
+    const CLOUD_AUDIT_TABLE = "audit_logs";
     const stages = [
       { id: "pilotagem", label: "Pilotagem" },
       { id: "inicio-producao", label: "Início de produção" },
@@ -1353,6 +1354,25 @@
       await transactionDone(transaction);
     }
 
+    async function logAudit(action, entity = "", entityId = "", description = "", payload = {}) {
+      if (!usingSupabase || !cloudDb) return;
+      try {
+        await cloudDb.from(CLOUD_AUDIT_TABLE).insert({
+          id: crypto.randomUUID(),
+          username: currentUser?.username || sessionStorage.getItem("seamRioUser") || "",
+          role: currentUser?.role || "",
+          action,
+          entity,
+          entity_id: String(entityId || ""),
+          description,
+          page: location.pathname.split("/").pop() || "index.html",
+          payload
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel registrar auditoria.", error);
+      }
+    }
+
     async function loadProducts() {
       if (usingSupabase) {
         const { data, error } = await cloudDb
@@ -1443,6 +1463,12 @@
       };
       const { error } = await cloudDb.from(CLOUD_REQUEST_TABLE).insert(request);
       if (error) throw error;
+      await logAudit("insert", CLOUD_REQUEST_TABLE, request.id, "Solicitacao criada pela producao", {
+        orderNumber: request.order_number,
+        clientEmail: request.client_email,
+        type: request.type,
+        sendEmail: sendEmailAfterCreate
+      });
       clientRequests = await loadClientRequests();
       renderClientRequests();
       el.productionRequestMessage.value = "";
@@ -1654,9 +1680,10 @@
       };
     }
 
-    async function unlockSystem(user) {
+    async function unlockSystem(user, logLogin = false) {
       currentUser = user;
       sessionStorage.setItem("seamRioUser", user.username);
+      if (logLogin) await logAudit("login", CLOUD_USER_TABLE, user.id, "Login no sistema de producao");
       document.body.classList.remove("auth-locked");
       orders = await loadOrders();
       clientRequests = await loadClientRequests();
@@ -1728,7 +1755,7 @@
 
     async function setupAuth() {
       const users = await normalizeUserRoles();
-      const isFirstAccess = users.length === 0;
+      const isFirstAccess = !usingSupabase && users.length === 0;
       if (!isFirstAccess) {
         const sessionUser = await getSessionUser();
         if (sessionUser) {
@@ -1742,6 +1769,7 @@
         : "Entre com seu usuário e senha para abrir o sistema.";
       el.authSubmitBtn.textContent = isFirstAccess ? "Criar usuário" : "Entrar";
       el.confirmPasswordField.hidden = !isFirstAccess;
+      el.authPasswordConfirm.required = isFirstAccess;
       el.authPassword.autocomplete = isFirstAccess ? "new-password" : "current-password";
       el.authHint.textContent = isFirstAccess
         ? `Guarde essa senha. Ela será necessária para abrir o sistema ${usingSupabase ? "online." : "neste navegador."}`
@@ -1756,12 +1784,12 @@
             if (password.length < 4) throw new Error("Use uma senha com pelo menos 4 caracteres.");
             if (password !== el.authPasswordConfirm.value) throw new Error("As senhas não conferem.");
             const user = await createUser(username, password, "admin");
-            await unlockSystem(user);
+            await unlockSystem(user, true);
             return;
           }
           const user = await validateUser(username, password);
           if (!user) throw new Error("Usuário ou senha inválidos.");
-          await unlockSystem(user);
+          await unlockSystem(user, true);
         } catch (error) {
           showToast(error.message || "Não foi possível autenticar.");
         }
@@ -2608,12 +2636,21 @@
 
     document.querySelector("#orderForm").addEventListener("submit", async event => {
       event.preventDefault();
+      const wasEditing = orders.some(item => item.id === selectedId);
       const order = orderFromForm();
       const existingIndex = orders.findIndex(item => item.id === order.id);
       if (existingIndex >= 0) orders[existingIndex] = order;
       else orders.unshift(order);
       selectedId = order.id;
       await saveOrders();
+      await logAudit(wasEditing ? "update" : "insert", CLOUD_ORDER_TABLE, order.id, wasEditing ? "Pedido atualizado" : "Pedido criado", {
+        orderNumber: order.orderNumber,
+        clientName: order.clientName,
+        clientEmail: order.clientEmail,
+        stage: order.stage,
+        totalPieces: totalPieces(order),
+        orderValue: order.orderValue
+      });
       fillForm(order);
       renderAll();
       showToast("Pedido salvo com sucesso.");
@@ -2651,6 +2688,11 @@
       orders.unshift(order);
       selectedId = order.id;
       await saveOrders();
+      await logAudit("insert", CLOUD_ORDER_TABLE, order.id, "Pedido duplicado", {
+        orderNumber: order.orderNumber,
+        clientName: order.clientName,
+        totalPieces: totalPieces(order)
+      });
       fillForm(order);
       renderAll();
       showToast("Pedido duplicado.");
@@ -2705,7 +2747,12 @@
         const username = el.newUsername.value;
         const password = el.newUserPassword.value;
         if (password.length < 4) throw new Error("Use uma senha com pelo menos 4 caracteres.");
-        await createUser(username, password, el.newUserRole.value, el.newUserClientName.value, el.newUserClientEmail.value);
+        const createdUser = await createUser(username, password, el.newUserRole.value, el.newUserClientName.value, el.newUserClientEmail.value);
+        await logAudit("insert", CLOUD_USER_TABLE, createdUser.id, "Usuario cadastrado pelo administrador", {
+          username: createdUser.username,
+          role: createdUser.role,
+          clientEmail: createdUser.clientEmail || createdUser.client_email || ""
+        });
         el.newUsername.value = "";
         el.newUserPassword.value = "";
         el.newUserClientName.value = "";
@@ -2729,6 +2776,9 @@
           orders = imported.map(order => ({ ...order, id: order.id || crypto.randomUUID() }));
           selectedId = orders[0]?.id || null;
           await saveOrders();
+          await logAudit("import", CLOUD_ORDER_TABLE, "", "Importacao de backup JSON", {
+            totalOrders: orders.length
+          });
           fillForm(orders[0] || null);
           renderAll();
           showToast("Dados importados.");

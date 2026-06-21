@@ -6,6 +6,7 @@
     { href: "producao.html", title: "Produção", subtitle: "Linha de montagem", mark: "04", keys: ["producao"] },
     { href: "financeiro.html", title: "Financeiro", subtitle: "Fluxo de caixa", mark: "05", keys: ["financeiro"] },
     { href: "producao.html", title: "Relatórios", subtitle: "Exportações", mark: "06", keys: ["relatorios"] }
+    ,{ href: "auditoria.html", title: "Auditoria", subtitle: "Log de acessos", mark: "07", keys: ["auditoria"] }
   ];
 
   function currentName() {
@@ -122,6 +123,10 @@
   function boot() {
     document.body.classList.add("seam-theme");
     const name = currentName();
+    if (name === "cliente") {
+      document.body.classList.add("seam-client-portal");
+      return;
+    }
     injectSidebar(name);
     injectTopbar();
     bindActions();

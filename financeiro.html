@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Financeiro - Seam Rio Confecção</title>
+  <title>Financeiro - Seam Rio ConfecÃ§Ã£o</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <link rel="stylesheet" href="seam-theme.css">
@@ -246,7 +246,7 @@
       <p class="subtitle">Acesso exclusivo para administrador.</p>
       <form class="content" id="authForm">
         <div class="field">
-          <label for="username">Usuário</label>
+          <label for="username">UsuÃ¡rio</label>
           <input id="username" autocomplete="username" required>
         </div>
         <div class="field">
@@ -268,6 +268,7 @@
         </div>
       </div>
       <div class="toolbar">
+        <button class="btn" id="toggleValuesBtn" type="button" aria-pressed="false">Mostrar valores</button>
         <button class="btn" id="backBtn" type="button">Sistema</button>
         <button class="btn" id="emailAlertBtn" type="button">Enviar alerta</button>
         <button class="btn" id="logoutBtn" type="button">Sair</button>
@@ -275,17 +276,17 @@
     </header>
 
     <section class="summary-grid">
-      <div class="metric"><span>Caixa</span><strong id="cashMetric">R$ 0,00</strong></div>
-      <div class="metric"><span>Investimentos</span><strong id="investmentMetric">R$ 0,00</strong></div>
-      <div class="metric"><span>Entradas previstas</span><strong id="expectedMetric">R$ 0,00</strong></div>
-      <div class="metric"><span>Contas pendentes</span><strong id="pendingMetric">R$ 0,00</strong></div>
+      <div class="metric"><span>Caixa</span><strong id="cashMetric">R$ ******</strong></div>
+      <div class="metric"><span>Investimentos</span><strong id="investmentMetric">R$ ******</strong></div>
+      <div class="metric"><span>Entradas previstas</span><strong id="expectedMetric">R$ ******</strong></div>
+      <div class="metric"><span>Contas pendentes</span><strong id="pendingMetric">R$ ******</strong></div>
     </section>
 
     <main>
       <section class="panel">
         <div class="panel-head">
           <h2>Cadastro financeiro</h2>
-          <span class="small">Despesas e posição de caixa</span>
+          <span class="small">Despesas e posiÃ§Ã£o de caixa</span>
         </div>
         <div class="content">
           <form class="content" id="expenseForm">
@@ -309,7 +310,7 @@
                 <input id="paymentDate" type="date">
               </div>
               <div class="field">
-                <label for="expenseStatus">Situação</label>
+                <label for="expenseStatus">SituaÃ§Ã£o</label>
                 <select id="expenseStatus">
                   <option value="pendente">Pendente</option>
                   <option value="paga">Paga</option>
@@ -317,7 +318,7 @@
               </div>
             </div>
             <div class="field">
-              <label for="expenseNotes">Observações</label>
+              <label for="expenseNotes">ObservaÃ§Ãµes</label>
               <textarea id="expenseNotes" placeholder="Fornecedor, categoria, forma de pagamento ou detalhes."></textarea>
             </div>
             <button class="btn primary" type="submit">Cadastrar despesa</button>
@@ -344,14 +345,14 @@
                 <input id="alertEmail" type="email" placeholder="financeiro@email.com">
               </div>
               <div class="field">
-                <label for="alertDays">Alertar próximos dias</label>
+                <label for="alertDays">Alertar prÃ³ximos dias</label>
                 <input id="alertDays" type="number" min="1" step="1" value="7">
               </div>
               <div class="field">
-                <label for="autoEmail">Alerta automático</label>
+                <label for="autoEmail">Alerta automÃ¡tico</label>
                 <select id="autoEmail">
-                  <option value="false">Não</option>
-                  <option value="true">Sim, ao abrir a página</option>
+                  <option value="false">NÃ£o</option>
+                  <option value="true">Sim, ao abrir a pÃ¡gina</option>
                 </select>
               </div>
             </div>
@@ -362,8 +363,8 @@
 
       <section class="panel">
         <div class="panel-head">
-          <h2>Contas próximas</h2>
-          <span class="small" id="dueWindowLabel">Próximos 7 dias</span>
+          <h2>Contas prÃ³ximas</h2>
+          <span class="small" id="dueWindowLabel">PrÃ³ximos 7 dias</span>
         </div>
         <div class="content">
           <div class="expense-list" id="dueSoonList"></div>
@@ -388,11 +389,13 @@
     const USER_TABLE = "app_users";
     const EXPENSE_TABLE = "finance_expenses";
     const POSITION_TABLE = "finance_position";
+    const AUDIT_TABLE = "audit_logs";
     const POSITION_ID = "main";
 
     let cloudDb = null;
     let currentUser = null;
     let expenses = [];
+    let valuesVisible = false;
     let position = {
       id: POSITION_ID,
       cash_value: 0,
@@ -430,6 +433,7 @@
       expenseCount: document.querySelector("#expenseCount"),
       expenseList: document.querySelector("#expenseList"),
       emailAlertBtn: document.querySelector("#emailAlertBtn"),
+      toggleValuesBtn: document.querySelector("#toggleValuesBtn"),
       backBtn: document.querySelector("#backBtn"),
       logoutBtn: document.querySelector("#logoutBtn"),
       toast: document.querySelector("#toast")
@@ -438,7 +442,7 @@
     function initSupabase() {
       const config = window.SEAM_RIO_SUPABASE || {};
       if (!config.url || !config.anonKey || !window.supabase?.createClient) {
-        throw new Error("Supabase não configurado.");
+        throw new Error("Supabase nÃ£o configurado.");
       }
       cloudDb = window.supabase.createClient(config.url, config.anonKey, {
         auth: { persistSession: false, autoRefreshToken: false }
@@ -476,6 +480,25 @@
       if (error) throw error;
       if (!data || data.role !== "admin") return null;
       return data;
+    }
+
+    async function logAudit(action, entity = "", entityId = "", description = "", payload = {}) {
+      if (!cloudDb) return;
+      try {
+        await cloudDb.from(AUDIT_TABLE).insert({
+          id: crypto.randomUUID(),
+          username: currentUser?.username || sessionStorage.getItem("seamRioUser") || "",
+          role: currentUser?.role || "",
+          action,
+          entity,
+          entity_id: String(entityId || ""),
+          description,
+          page: location.pathname.split("/").pop() || "financeiro.html",
+          payload
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel registrar auditoria.", error);
+      }
     }
 
     async function loadExpenses() {
@@ -530,6 +553,19 @@
 
     function formatMoney(value) {
       return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function displayMoney(value) {
+      return valuesVisible ? formatMoney(value) : "R$ ******";
+    }
+
+    function updateValuesToggle() {
+      el.toggleValuesBtn.textContent = valuesVisible ? "Ocultar valores" : "Mostrar valores";
+      el.toggleValuesBtn.setAttribute("aria-pressed", String(valuesVisible));
+      document.body.classList.toggle("finance-values-hidden", !valuesVisible);
+      [el.cashValue, el.investmentValue, el.expectedInflow].forEach(input => {
+        input.type = valuesVisible ? "number" : "password";
+      });
     }
 
     function formatDate(value) {
@@ -596,7 +632,7 @@
           <div class="expense-row">
             <div class="expense-main">
               <strong>${escapeHtml(expense.name)}</strong>
-              <div class="small">${formatMoney(expense.amount)} · vence ${formatDate(expense.due_date)}${expense.payment_date ? " · pago em " + formatDate(expense.payment_date) : ""}</div>
+              <div class="small">${displayMoney(expense.amount)} Â· vence ${formatDate(expense.due_date)}${expense.payment_date ? " Â· pago em " + formatDate(expense.payment_date) : ""}</div>
               ${expense.notes ? `<div class="small">${escapeHtml(expense.notes)}</div>` : ""}
             </div>
             <div class="actions-row">
@@ -615,7 +651,7 @@
             await refresh();
             showToast("Despesa marcada como paga.");
           } catch (error) {
-            showToast(error.message || "Não foi possível atualizar.");
+            showToast(error.message || "NÃ£o foi possÃ­vel atualizar.");
           }
         });
       });
@@ -626,9 +662,9 @@
           try {
             await deleteExpense(button.dataset.delete);
             await refresh();
-            showToast("Despesa excluída.");
+            showToast("Despesa excluÃ­da.");
           } catch (error) {
-            showToast(error.message || "Não foi possível excluir.");
+            showToast(error.message || "NÃ£o foi possÃ­vel excluir.");
           }
         });
       });
@@ -636,14 +672,15 @@
 
     function render() {
       const pendingTotal = pendingExpenses().reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
-      el.cashMetric.textContent = formatMoney(position.cash_value);
-      el.investmentMetric.textContent = formatMoney(position.investment_value);
-      el.expectedMetric.textContent = formatMoney(position.expected_inflow);
-      el.pendingMetric.textContent = formatMoney(pendingTotal);
-      el.dueWindowLabel.textContent = `Próximos ${Number(position.alert_days || 7)} dias`;
+      updateValuesToggle();
+      el.cashMetric.textContent = displayMoney(position.cash_value);
+      el.investmentMetric.textContent = displayMoney(position.investment_value);
+      el.expectedMetric.textContent = displayMoney(position.expected_inflow);
+      el.pendingMetric.textContent = displayMoney(pendingTotal);
+      el.dueWindowLabel.textContent = `PrÃ³ximos ${Number(position.alert_days || 7)} dias`;
       el.expenseCount.textContent = `${expenses.length} cadastrada${expenses.length === 1 ? "" : "s"}`;
       fillPositionForm();
-      renderExpenseList(el.dueSoonList, dueSoonExpenses(), "Nenhuma conta próxima do vencimento.");
+      renderExpenseList(el.dueSoonList, dueSoonExpenses(), "Nenhuma conta prÃ³xima do vencimento.");
       renderExpenseList(el.expenseList, expenses, "Nenhuma despesa cadastrada.");
     }
 
@@ -655,20 +692,20 @@
 
     function buildAlertEmail() {
       const items = dueSoonExpenses();
-      if (!items.length) throw new Error("Não há contas próximas para alertar.");
+      if (!items.length) throw new Error("NÃ£o hÃ¡ contas prÃ³ximas para alertar.");
       if (!position.alert_email) throw new Error("Informe o e-mail de alerta no caixa.");
       const total = items.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
       const lines = items.map(expense => {
         const badge = expenseBadge(expense);
-        return `- ${expense.name}: ${formatMoney(expense.amount)} · vencimento ${formatDate(expense.due_date)} · ${badge.text}`;
+        return `- ${expense.name}: ${formatMoney(expense.amount)} Â· vencimento ${formatDate(expense.due_date)} Â· ${badge.text}`;
       });
       return {
         to: position.alert_email,
-        subject: `Alerta financeiro Seam Rio - ${items.length} conta(s) próxima(s)`,
+        subject: `Alerta financeiro Seam Rio - ${items.length} conta(s) prÃ³xima(s)`,
         body: [
-          "Olá!",
+          "OlÃ¡!",
           "",
-          `Estas contas precisam de atenção nos próximos ${Number(position.alert_days || 7)} dias:`,
+          `Estas contas precisam de atenÃ§Ã£o nos prÃ³ximos ${Number(position.alert_days || 7)} dias:`,
           "",
           ...lines,
           "",
@@ -698,13 +735,14 @@
       try {
         sendAlertEmail(true);
       } catch {
-        // Sem alerta configurado ou sem contas próximas.
+        // Sem alerta configurado ou sem contas prÃ³ximas.
       }
     }
 
-    async function enterWithAdmin(user) {
+    async function enterWithAdmin(user, logLogin = false) {
       currentUser = user;
       sessionStorage.setItem("seamRioUser", user.username);
+      if (logLogin) await logAudit("login", USER_TABLE, user.id, "Login no financeiro");
       await refresh();
       document.body.classList.remove("auth-locked");
       runAutomaticAlert();
@@ -720,17 +758,17 @@
       event.preventDefault();
       try {
         const user = await validateAdmin(el.username.value, el.password.value);
-        if (!user) throw new Error("Usuário ou senha inválidos.");
-        await enterWithAdmin(user);
+        if (!user) throw new Error("UsuÃ¡rio ou senha invÃ¡lidos.");
+        await enterWithAdmin(user, true);
       } catch (error) {
-        showToast(error.message || "Não foi possível entrar.");
+        showToast(error.message || "NÃ£o foi possÃ­vel entrar.");
       }
     });
 
     el.expenseForm.addEventListener("submit", async event => {
       event.preventDefault();
       try {
-        await saveExpense({
+        const expense = {
           id: crypto.randomUUID(),
           name: el.expenseName.value.trim(),
           amount: Number(el.expenseAmount.value || 0),
@@ -739,13 +777,20 @@
           status: el.expenseStatus.value,
           notes: el.expenseNotes.value.trim(),
           created_at: new Date().toISOString()
+        };
+        await saveExpense(expense);
+        await logAudit("insert", EXPENSE_TABLE, expense.id, "Despesa cadastrada", {
+          name: expense.name,
+          amount: expense.amount,
+          dueDate: expense.due_date,
+          status: expense.status
         });
         el.expenseForm.reset();
         el.expenseStatus.value = "pendente";
         await refresh();
         showToast("Despesa cadastrada.");
       } catch (error) {
-        showToast(error.message || "Não foi possível cadastrar.");
+        showToast(error.message || "NÃ£o foi possÃ­vel cadastrar.");
       }
     });
 
@@ -753,10 +798,15 @@
       event.preventDefault();
       try {
         await savePosition();
+        await logAudit("update", POSITION_TABLE, POSITION_ID, "Valores financeiros atualizados", {
+          cashValue: position.cash_value,
+          investmentValue: position.investment_value,
+          expectedInflow: position.expected_inflow
+        });
         render();
         showToast("Valores financeiros salvos.");
       } catch (error) {
-        showToast(error.message || "Não foi possível salvar.");
+        showToast(error.message || "NÃ£o foi possÃ­vel salvar.");
       }
     });
 
@@ -764,8 +814,13 @@
       try {
         sendAlertEmail(false);
       } catch (error) {
-        showToast(error.message || "Não foi possível gerar o alerta.");
+        showToast(error.message || "NÃ£o foi possÃ­vel gerar o alerta.");
       }
+    });
+
+    el.toggleValuesBtn.addEventListener("click", () => {
+      valuesVisible = !valuesVisible;
+      render();
     });
 
     el.backBtn.addEventListener("click", () => {
