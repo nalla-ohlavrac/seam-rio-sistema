@@ -688,6 +688,7 @@
         <button class="btn" id="exportBtn" type="button">Backup JSON</button>
         <label class="btn" for="importFile">Importar dados</label>
         <input id="importFile" type="file" accept="application/json" hidden>
+        <button class="btn" id="financeBtn" type="button" hidden>Financeiro</button>
         <button class="btn" id="manageUsersBtn" type="button" hidden>Usuários</button>
         <button class="btn" id="logoutBtn" type="button">Sair</button>
       </div>
@@ -1145,6 +1146,7 @@
       confirmPasswordField: document.querySelector("#confirmPasswordField"),
       authSubmitBtn: document.querySelector("#authSubmitBtn"),
       authHint: document.querySelector("#authHint"),
+      financeBtn: document.querySelector("#financeBtn"),
       manageUsersBtn: document.querySelector("#manageUsersBtn"),
       userAdminPanel: document.querySelector("#userAdminPanel"),
       summarySection: document.querySelector("#summarySection"),
@@ -1611,6 +1613,7 @@
     }
 
     function applyRoleView() {
+      el.financeBtn.hidden = currentUser?.role !== "admin";
       el.manageUsersBtn.hidden = currentUser?.role !== "admin";
       el.userAdminPanel.classList.remove("show");
       el.summarySection.hidden = false;
@@ -2585,6 +2588,10 @@
     document.querySelector("#logoutBtn").addEventListener("click", () => {
       sessionStorage.removeItem("seamRioUser");
       location.reload();
+    });
+
+    el.financeBtn.addEventListener("click", () => {
+      window.location.href = "financeiro.html";
     });
 
     el.manageUsersBtn.addEventListener("click", async () => {

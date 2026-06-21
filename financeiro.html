@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Financeiro - Seam Rio Confecção</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9e1e7;
+      --soft: #e8f1f3;
+      --panel: rgba(255, 255, 255, .94);
+      --accent: #008f86;
+      --accent-dark: #006e69;
+      --danger: #b42318;
+      --good: #18794e;
+      --warn: #b7791f;
+      --shadow: 0 18px 50px rgba(31, 41, 51, .12);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(135deg, #e2f2f1 0%, #f8fbfc 55%, #f4eef1 100%);
+    }
+    button, input, select, textarea { font: inherit; }
+    body.auth-locked .app-shell { display: none; }
+    body:not(.auth-locked) .auth-gate { display: none; }
+
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .auth-card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+    .auth-card {
+      width: min(460px, 100%);
+      padding: 28px;
+    }
+    .auth-logo {
+      width: 150px;
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      margin-bottom: 14px;
+    }
+    h1 { font-size: 30px; line-height: 1.05; }
+    h2 { font-size: 20px; }
+    .subtitle, .small { color: var(--muted); line-height: 1.45; }
+    .small { font-size: 13px; }
+
+    .app-shell {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 42px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    .brand {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .brand-logo {
+      width: 130px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+    .toolbar, .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      min-height: 42px;
+    }
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--accent-dark); }
+    .btn.danger { color: var(--danger); }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .metric {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+    .metric strong {
+      font-size: 26px;
+      line-height: 1;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(360px, .9fr) minmax(520px, 1.1fr);
+      gap: 16px;
+    }
+    .panel { overflow: hidden; }
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+    .content {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 12px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .field { display: grid; gap: 6px; }
+    label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #5d6b82;
+    }
+    input, select, textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px 12px;
+      color: var(--ink);
+    }
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+    .expense-list {
+      display: grid;
+      gap: 10px;
+    }
+    .expense-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+    }
+    .expense-main { display: grid; gap: 4px; }
+    .pill {
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: rgba(0, 127, 122, .1);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .pill.done { background: rgba(24, 121, 78, .12); color: var(--good); }
+    .pill.late { background: rgba(180, 35, 24, .11); color: var(--danger); }
+    .pill.warn { background: rgba(183, 121, 31, .14); color: var(--warn); }
+    .empty {
+      padding: 28px 18px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, .72);
+    }
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      border-radius: 8px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .2s ease;
+      pointer-events: none;
+      max-width: min(440px, calc(100vw - 36px));
+      z-index: 20;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      header, main, .grid-2, .grid-3, .summary-grid { grid-template-columns: 1fr; }
+      .brand { grid-template-columns: 1fr; }
+      .toolbar, .actions-row, .panel-head { align-items: stretch; flex-direction: column; }
+      .btn { width: 100%; }
+      .expense-row { align-items: stretch; flex-direction: column; }
+    }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="auth-gate" aria-label="Acesso financeiro">
+    <div class="auth-card">
+      <img class="auth-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+      <h1>Financeiro</h1>
+      <p class="subtitle">Acesso exclusivo para administrador.</p>
+      <form class="content" id="authForm">
+        <div class="field">
+          <label for="username">Usuário</label>
+          <input id="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <img class="brand-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+        <div>
+          <h1>Financeiro</h1>
+          <p class="subtitle">Despesas, caixa, investimentos, entradas previstas e alertas de vencimento.</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="backBtn" type="button">Sistema</button>
+        <button class="btn" id="emailAlertBtn" type="button">Enviar alerta</button>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <div class="metric"><span>Caixa</span><strong id="cashMetric">R$ 0,00</strong></div>
+      <div class="metric"><span>Investimentos</span><strong id="investmentMetric">R$ 0,00</strong></div>
+      <div class="metric"><span>Entradas previstas</span><strong id="expectedMetric">R$ 0,00</strong></div>
+      <div class="metric"><span>Contas pendentes</span><strong id="pendingMetric">R$ 0,00</strong></div>
+    </section>
+
+    <main>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Cadastro financeiro</h2>
+          <span class="small">Despesas e posição de caixa</span>
+        </div>
+        <div class="content">
+          <form class="content" id="expenseForm">
+            <div class="grid-2">
+              <div class="field">
+                <label for="expenseName">Despesa</label>
+                <input id="expenseName" placeholder="Ex.: Aluguel, tecido, energia" required>
+              </div>
+              <div class="field">
+                <label for="expenseAmount">Valor</label>
+                <input id="expenseAmount" type="number" min="0" step="0.01" required>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="field">
+                <label for="dueDate">Vencimento</label>
+                <input id="dueDate" type="date" required>
+              </div>
+              <div class="field">
+                <label for="paymentDate">Pagamento</label>
+                <input id="paymentDate" type="date">
+              </div>
+              <div class="field">
+                <label for="expenseStatus">Situação</label>
+                <select id="expenseStatus">
+                  <option value="pendente">Pendente</option>
+                  <option value="paga">Paga</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="expenseNotes">Observações</label>
+              <textarea id="expenseNotes" placeholder="Fornecedor, categoria, forma de pagamento ou detalhes."></textarea>
+            </div>
+            <button class="btn primary" type="submit">Cadastrar despesa</button>
+          </form>
+
+          <form class="content" id="positionForm">
+            <div class="grid-3">
+              <div class="field">
+                <label for="cashValue">Valores em caixa</label>
+                <input id="cashValue" type="number" min="0" step="0.01">
+              </div>
+              <div class="field">
+                <label for="investmentValue">Guardado em investimento</label>
+                <input id="investmentValue" type="number" min="0" step="0.01">
+              </div>
+              <div class="field">
+                <label for="expectedInflow">Perspectiva de entradas</label>
+                <input id="expectedInflow" type="number" min="0" step="0.01">
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="field">
+                <label for="alertEmail">E-mail de alerta</label>
+                <input id="alertEmail" type="email" placeholder="financeiro@email.com">
+              </div>
+              <div class="field">
+                <label for="alertDays">Alertar próximos dias</label>
+                <input id="alertDays" type="number" min="1" step="1" value="7">
+              </div>
+              <div class="field">
+                <label for="autoEmail">Alerta automático</label>
+                <select id="autoEmail">
+                  <option value="false">Não</option>
+                  <option value="true">Sim, ao abrir a página</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn primary" type="submit">Salvar caixa</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Contas próximas</h2>
+          <span class="small" id="dueWindowLabel">Próximos 7 dias</span>
+        </div>
+        <div class="content">
+          <div class="expense-list" id="dueSoonList"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Todas as despesas</h2>
+          <span class="small" id="expenseCount">0 cadastradas</span>
+        </div>
+        <div class="content">
+          <div class="expense-list" id="expenseList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const USER_TABLE = "app_users";
+    const EXPENSE_TABLE = "finance_expenses";
+    const POSITION_TABLE = "finance_position";
+    const POSITION_ID = "main";
+
+    let cloudDb = null;
+    let currentUser = null;
+    let expenses = [];
+    let position = {
+      id: POSITION_ID,
+      cash_value: 0,
+      investment_value: 0,
+      expected_inflow: 0,
+      alert_email: "",
+      alert_days: 7,
+      auto_email: false
+    };
+
+    const el = {
+      authForm: document.querySelector("#authForm"),
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      cashMetric: document.querySelector("#cashMetric"),
+      investmentMetric: document.querySelector("#investmentMetric"),
+      expectedMetric: document.querySelector("#expectedMetric"),
+      pendingMetric: document.querySelector("#pendingMetric"),
+      expenseForm: document.querySelector("#expenseForm"),
+      expenseName: document.querySelector("#expenseName"),
+      expenseAmount: document.querySelector("#expenseAmount"),
+      dueDate: document.querySelector("#dueDate"),
+      paymentDate: document.querySelector("#paymentDate"),
+      expenseStatus: document.querySelector("#expenseStatus"),
+      expenseNotes: document.querySelector("#expenseNotes"),
+      positionForm: document.querySelector("#positionForm"),
+      cashValue: document.querySelector("#cashValue"),
+      investmentValue: document.querySelector("#investmentValue"),
+      expectedInflow: document.querySelector("#expectedInflow"),
+      alertEmail: document.querySelector("#alertEmail"),
+      alertDays: document.querySelector("#alertDays"),
+      autoEmail: document.querySelector("#autoEmail"),
+      dueWindowLabel: document.querySelector("#dueWindowLabel"),
+      dueSoonList: document.querySelector("#dueSoonList"),
+      expenseCount: document.querySelector("#expenseCount"),
+      expenseList: document.querySelector("#expenseList"),
+      emailAlertBtn: document.querySelector("#emailAlertBtn"),
+      backBtn: document.querySelector("#backBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      toast: document.querySelector("#toast")
+    };
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) {
+        throw new Error("Supabase não configurado.");
+      }
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function validateAdmin(username, password) {
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const passwordHash = await hashPassword(password, data.salt);
+      if (passwordHash !== data.password_hash) return null;
+      if (data.role !== "admin") throw new Error("Acesso permitido somente para administrador.");
+      return data;
+    }
+
+    async function loadExpenses() {
+      const { data, error } = await cloudDb
+        .from(EXPENSE_TABLE)
+        .select("*")
+        .order("due_date", { ascending: true });
+      if (error) throw error;
+      expenses = data || [];
+    }
+
+    async function loadPosition() {
+      const { data, error } = await cloudDb
+        .from(POSITION_TABLE)
+        .select("*")
+        .eq("id", POSITION_ID)
+        .maybeSingle();
+      if (error) throw error;
+      if (data) position = data;
+    }
+
+    async function savePosition() {
+      const row = {
+        id: POSITION_ID,
+        cash_value: Number(el.cashValue.value || 0),
+        investment_value: Number(el.investmentValue.value || 0),
+        expected_inflow: Number(el.expectedInflow.value || 0),
+        alert_email: el.alertEmail.value.trim(),
+        alert_days: Math.max(1, Number(el.alertDays.value || 7)),
+        auto_email: el.autoEmail.value === "true",
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await cloudDb.from(POSITION_TABLE).upsert(row);
+      if (error) throw error;
+      position = row;
+    }
+
+    async function saveExpense(expense) {
+      const { error } = await cloudDb.from(EXPENSE_TABLE).insert(expense);
+      if (error) throw error;
+    }
+
+    async function updateExpense(id, patch) {
+      const { error } = await cloudDb.from(EXPENSE_TABLE).update(patch).eq("id", id);
+      if (error) throw error;
+    }
+
+    async function deleteExpense(id) {
+      const { error } = await cloudDb.from(EXPENSE_TABLE).delete().eq("id", id);
+      if (error) throw error;
+    }
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function formatDate(value) {
+      if (!value) return "Sem data";
+      return new Date(value + "T00:00:00").toLocaleDateString("pt-BR");
+    }
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function daysUntil(value) {
+      if (!value) return null;
+      const due = new Date(value + "T00:00:00");
+      const now = new Date(today() + "T00:00:00");
+      return Math.ceil((due - now) / (24 * 60 * 60 * 1000));
+    }
+
+    function expenseBadge(expense) {
+      if (expense.status === "paga") return { text: "paga", className: "done" };
+      const days = daysUntil(expense.due_date);
+      if (days < 0) return { text: `atrasada ${Math.abs(days)}d`, className: "late" };
+      if (days === 0) return { text: "vence hoje", className: "warn" };
+      return { text: `${days}d`, className: days <= 3 ? "warn" : "" };
+    }
+
+    function pendingExpenses() {
+      return expenses.filter(expense => expense.status !== "paga");
+    }
+
+    function dueSoonExpenses() {
+      const alertDays = Math.max(1, Number(position.alert_days || 7));
+      return pendingExpenses()
+        .filter(expense => {
+          const days = daysUntil(expense.due_date);
+          return days !== null && days <= alertDays;
+        })
+        .sort((a, b) => (a.due_date || "").localeCompare(b.due_date || ""));
+    }
+
+    function escapeHtml(value) {
+      return String(value || "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[char]));
+    }
+
+    function fillPositionForm() {
+      el.cashValue.value = Number(position.cash_value || 0);
+      el.investmentValue.value = Number(position.investment_value || 0);
+      el.expectedInflow.value = Number(position.expected_inflow || 0);
+      el.alertEmail.value = position.alert_email || "";
+      el.alertDays.value = Number(position.alert_days || 7);
+      el.autoEmail.value = String(Boolean(position.auto_email));
+    }
+
+    function renderExpenseList(target, items, emptyText) {
+      if (!items.length) {
+        target.innerHTML = `<div class="empty">${emptyText}</div>`;
+        return;
+      }
+      target.innerHTML = items.map(expense => {
+        const badge = expenseBadge(expense);
+        return `
+          <div class="expense-row">
+            <div class="expense-main">
+              <strong>${escapeHtml(expense.name)}</strong>
+              <div class="small">${formatMoney(expense.amount)} · vence ${formatDate(expense.due_date)}${expense.payment_date ? " · pago em " + formatDate(expense.payment_date) : ""}</div>
+              ${expense.notes ? `<div class="small">${escapeHtml(expense.notes)}</div>` : ""}
+            </div>
+            <div class="actions-row">
+              <span class="pill ${badge.className}">${badge.text}</span>
+              ${expense.status === "paga" ? "" : `<button class="btn" type="button" data-pay="${expense.id}">Marcar paga</button>`}
+              <button class="btn danger" type="button" data-delete="${expense.id}">Excluir</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      target.querySelectorAll("[data-pay]").forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            await updateExpense(button.dataset.pay, { status: "paga", payment_date: today() });
+            await refresh();
+            showToast("Despesa marcada como paga.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível atualizar.");
+          }
+        });
+      });
+
+      target.querySelectorAll("[data-delete]").forEach(button => {
+        button.addEventListener("click", async () => {
+          if (!confirm("Excluir esta despesa?")) return;
+          try {
+            await deleteExpense(button.dataset.delete);
+            await refresh();
+            showToast("Despesa excluída.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível excluir.");
+          }
+        });
+      });
+    }
+
+    function render() {
+      const pendingTotal = pendingExpenses().reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+      el.cashMetric.textContent = formatMoney(position.cash_value);
+      el.investmentMetric.textContent = formatMoney(position.investment_value);
+      el.expectedMetric.textContent = formatMoney(position.expected_inflow);
+      el.pendingMetric.textContent = formatMoney(pendingTotal);
+      el.dueWindowLabel.textContent = `Próximos ${Number(position.alert_days || 7)} dias`;
+      el.expenseCount.textContent = `${expenses.length} cadastrada${expenses.length === 1 ? "" : "s"}`;
+      fillPositionForm();
+      renderExpenseList(el.dueSoonList, dueSoonExpenses(), "Nenhuma conta próxima do vencimento.");
+      renderExpenseList(el.expenseList, expenses, "Nenhuma despesa cadastrada.");
+    }
+
+    async function refresh() {
+      await loadExpenses();
+      await loadPosition();
+      render();
+    }
+
+    function buildAlertEmail() {
+      const items = dueSoonExpenses();
+      if (!items.length) throw new Error("Não há contas próximas para alertar.");
+      if (!position.alert_email) throw new Error("Informe o e-mail de alerta no caixa.");
+      const total = items.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
+      const lines = items.map(expense => {
+        const badge = expenseBadge(expense);
+        return `- ${expense.name}: ${formatMoney(expense.amount)} · vencimento ${formatDate(expense.due_date)} · ${badge.text}`;
+      });
+      return {
+        to: position.alert_email,
+        subject: `Alerta financeiro Seam Rio - ${items.length} conta(s) próxima(s)`,
+        body: [
+          "Olá!",
+          "",
+          `Estas contas precisam de atenção nos próximos ${Number(position.alert_days || 7)} dias:`,
+          "",
+          ...lines,
+          "",
+          `Total pendente nesse alerta: ${formatMoney(total)}`,
+          `Caixa atual: ${formatMoney(position.cash_value)}`,
+          `Investimentos: ${formatMoney(position.investment_value)}`,
+          `Entradas previstas: ${formatMoney(position.expected_inflow)}`,
+          "",
+          "Mensagem gerada pelo painel financeiro Seam Rio."
+        ].join("\n")
+      };
+    }
+
+    function sendAlertEmail(auto = false) {
+      const email = buildAlertEmail();
+      if (auto) {
+        const key = `seamRioFinanceAutoAlert-${today()}`;
+        if (localStorage.getItem(key)) return;
+        localStorage.setItem(key, "sent");
+      }
+      window.location.href = `mailto:${encodeURIComponent(email.to)}?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
+      showToast("Rascunho de alerta financeiro gerado.");
+    }
+
+    function runAutomaticAlert() {
+      if (!position.auto_email) return;
+      try {
+        sendAlertEmail(true);
+      } catch {
+        // Sem alerta configurado ou sem contas próximas.
+      }
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 3000);
+    }
+
+    el.authForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const user = await validateAdmin(el.username.value, el.password.value);
+        if (!user) throw new Error("Usuário ou senha inválidos.");
+        currentUser = user;
+        await refresh();
+        document.body.classList.remove("auth-locked");
+        runAutomaticAlert();
+      } catch (error) {
+        showToast(error.message || "Não foi possível entrar.");
+      }
+    });
+
+    el.expenseForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        await saveExpense({
+          id: crypto.randomUUID(),
+          name: el.expenseName.value.trim(),
+          amount: Number(el.expenseAmount.value || 0),
+          due_date: el.dueDate.value,
+          payment_date: el.paymentDate.value || null,
+          status: el.expenseStatus.value,
+          notes: el.expenseNotes.value.trim(),
+          created_at: new Date().toISOString()
+        });
+        el.expenseForm.reset();
+        el.expenseStatus.value = "pendente";
+        await refresh();
+        showToast("Despesa cadastrada.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível cadastrar.");
+      }
+    });
+
+    el.positionForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        await savePosition();
+        render();
+        showToast("Valores financeiros salvos.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível salvar.");
+      }
+    });
+
+    el.emailAlertBtn.addEventListener("click", () => {
+      try {
+        sendAlertEmail(false);
+      } catch (error) {
+        showToast(error.message || "Não foi possível gerar o alerta.");
+      }
+    });
+
+    el.backBtn.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+
+    el.logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      el.password.value = "";
+      document.body.classList.add("auth-locked");
+    });
+
+    try {
+      initSupabase();
+    } catch (error) {
+      showToast(error.message);
+    }
+  </script>
+</body>
+</html>
