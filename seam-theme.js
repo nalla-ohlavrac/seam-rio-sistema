@@ -1,12 +1,11 @@
-(function () {
+﻿(function () {
   const pages = [
-    { href: "dashboard.html", title: "Painel Principal", subtitle: "Visão geral", mark: "01", keys: ["dashboard", "index"] },
+    { href: "dashboard.html", title: "Painel Principal", subtitle: "VisÃ£o geral", mark: "01", keys: ["dashboard", "index"] },
     { href: "producao.html", title: "Pedidos", subtitle: "Ordens de venda", mark: "02", keys: ["producao"] },
     { href: "cliente.html", title: "Clientes", subtitle: "Portal e CRM", mark: "03", keys: ["cliente"] },
-    { href: "producao.html", title: "Produção", subtitle: "Linha de montagem", mark: "04", keys: ["producao"] },
+    { href: "solicitacoes.html", title: "Solicitacoes", subtitle: "Mensagens e aprovacoes", mark: "04", keys: ["solicitacoes"] },
     { href: "financeiro.html", title: "Financeiro", subtitle: "Fluxo de caixa", mark: "05", keys: ["financeiro"] },
-    { href: "producao.html", title: "Relatórios", subtitle: "Exportações", mark: "06", keys: ["relatorios"] }
-    ,{ href: "auditoria.html", title: "Auditoria", subtitle: "Log de acessos", mark: "07", keys: ["auditoria"] }
+    { href: "auditoria.html", title: "Auditoria", subtitle: "Log de acessos", mark: "06", keys: ["auditoria"] }
   ];
 
   function currentName() {
@@ -32,7 +31,7 @@
         <img src="seam-rio-logo.png" alt="Seam Rio">
         <strong>Seam Rio</strong>
       </div>
-      <nav class="seam-global-nav" aria-label="Navegação principal">
+      <nav class="seam-global-nav" aria-label="NavegaÃ§Ã£o principal">
         ${pages.map(page => `
           <a class="${activeFor(page, name) ? "active" : ""}" href="${page.href}">
             <span class="seam-nav-mark">${page.mark}</span>
@@ -65,8 +64,8 @@
       </div>
       <div class="seam-user-box">
         <div>
-          <strong>Olá, ${user}</strong>
-          <span>Operação Seam Rio</span>
+          <strong>OlÃ¡, ${user}</strong>
+          <span>OperaÃ§Ã£o Seam Rio</span>
         </div>
         <div class="seam-avatar">${user.slice(0, 2).toUpperCase()}</div>
       </div>
@@ -94,7 +93,7 @@
       button.addEventListener("click", () => {
         const toast = document.querySelector("#toast");
         if (toast) {
-          toast.textContent = "Alertas e mensagens aparecem nos módulos de produção e financeiro.";
+          toast.textContent = "Alertas e mensagens aparecem nos mÃ³dulos de produÃ§Ã£o e financeiro.";
           toast.classList.add("show");
           setTimeout(() => toast.classList.remove("show"), 2800);
         }
@@ -104,7 +103,7 @@
       button.addEventListener("click", () => {
         const toast = document.querySelector("#toast");
         if (toast) {
-          toast.textContent = "Use o menu lateral para alternar entre os módulos.";
+          toast.textContent = "Use o menu lateral para alternar entre os mÃ³dulos.";
           toast.classList.add("show");
           setTimeout(() => toast.classList.remove("show"), 2800);
         }
@@ -138,3 +137,4 @@
     boot();
   }
 })();
+

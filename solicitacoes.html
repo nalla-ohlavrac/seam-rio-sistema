@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solicitações | Seam Rio Confecção</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <link rel="stylesheet" href="seam-theme.css">
+  <style>
+    :root {
+      --accent: #008f8a;
+      --accent-dark: #006c70;
+      --ink: #132233;
+      --muted: #607089;
+      --line: #d7e2ea;
+      --panel: rgba(255, 255, 255, .82);
+      --danger: #b42318;
+      --good: #18794e;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(135deg, #e2f2f1 0%, #f8fbfc 55%, #f4eef1 100%);
+    }
+    body.auth-locked .app-shell { display: none; }
+    body:not(.auth-locked) .auth-gate { display: none; }
+    .auth-gate {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .auth-card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 14px 40px rgba(19, 34, 51, .12);
+    }
+    .auth-card {
+      width: min(460px, 100%);
+      padding: 22px;
+    }
+    .auth-logo, .brand-logo {
+      width: 150px;
+      aspect-ratio: 843 / 661;
+      object-fit: contain;
+      border-radius: 8px;
+      background: rgba(255,255,255,.75);
+    }
+    .app-shell {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 40px;
+    }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .brand {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+    h1, h2 { margin: 0; }
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .toolbar, .actions-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .panel {
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .content {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cfdbe5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-height: 42px;
+      font: inherit;
+      background: rgba(255,255,255,.9);
+    }
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      background: rgba(255,255,255,.9);
+      color: var(--ink);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn.danger {
+      color: var(--danger);
+      border-color: rgba(180, 35, 24, .28);
+    }
+    .request-list {
+      display: grid;
+      gap: 10px;
+    }
+    .request-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.72);
+    }
+    .request-reply {
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: rgba(0, 143, 138, .08);
+      border-radius: 6px;
+    }
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(0, 143, 138, .1);
+      color: var(--accent-dark);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .pill.done { background: rgba(24, 121, 78, .12); color: var(--good); }
+    .pill.late { background: rgba(180, 35, 24, .11); color: var(--danger); }
+    .empty {
+      padding: 14px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: rgba(255,255,255,.55);
+    }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      max-width: 420px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      color: white;
+      background: #111827;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .2s ease;
+      pointer-events: none;
+      z-index: 90;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    @media (max-width: 820px) {
+      header, .grid-3, .request-row { grid-template-columns: 1fr; }
+      .toolbar, .actions-row { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body class="auth-locked">
+  <section class="auth-gate" aria-label="Acesso solicitações">
+    <div class="auth-card">
+      <img class="auth-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+      <h1>Solicitações</h1>
+      <p class="subtitle">Acesso para equipe de operação e administração.</p>
+      <form class="content" id="authForm">
+        <div class="field">
+          <label for="username">Usuário</label>
+          <input id="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <header>
+      <div class="brand">
+        <img class="brand-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
+        <div>
+          <h1>Solicitações</h1>
+          <p class="subtitle">Pedidos, mensagens, mudanças, pausas de produção e respostas dos clientes.</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="refreshBtn" type="button">Atualizar</button>
+        <button class="btn" id="productionBtn" type="button">Pedidos</button>
+        <button class="btn" id="logoutBtn" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Criar solicitação para cliente</h2>
+          <p class="subtitle">Gere uma solicitação interna ou crie o e-mail com link e senha temporária.</p>
+        </div>
+      </div>
+      <div class="content">
+        <div class="grid-3">
+          <div class="field">
+            <label for="productionRequestOrder">Pedido</label>
+            <select id="productionRequestOrder"></select>
+          </div>
+          <div class="field">
+            <label for="productionRequestType">Tipo</label>
+            <select id="productionRequestType">
+              <option value="producao">Solicitação da produção</option>
+              <option value="mensagem">Mensagem</option>
+              <option value="mudanca">Aprovação de mudança</option>
+              <option value="interromper">Interrupção/pausa</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="productionRequestEmail">E-mail do cliente</label>
+            <input id="productionRequestEmail" type="email" placeholder="cliente@email.com">
+          </div>
+        </div>
+        <div class="field">
+          <label for="productionRequestMessage">Solicitação para o cliente</label>
+          <textarea id="productionRequestMessage" placeholder="Descreva o que o cliente precisa aprovar, responder ou confirmar."></textarea>
+        </div>
+        <div class="actions-row">
+          <button class="btn primary" id="createProductionRequestBtn" type="button">Criar solicitação</button>
+          <button class="btn" id="emailProductionRequestBtn" type="button">Criar e enviar por e-mail</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Solicitações em andamento</h2>
+          <p class="subtitle" id="requestCount">0 solicitações</p>
+        </div>
+        <select id="statusFilter" aria-label="Filtrar solicitações">
+          <option value="">Todas</option>
+          <option value="pendente">Pendentes</option>
+          <option value="respondida">Respondidas</option>
+          <option value="resolvido">Resolvidas</option>
+        </select>
+      </div>
+      <div class="content">
+        <div class="request-list" id="clientRequestList"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const ORDER_TABLE = "orders";
+    const USER_TABLE = "app_users";
+    const REQUEST_TABLE = "client_requests";
+    const AUDIT_TABLE = "audit_logs";
+
+    let cloudDb = null;
+    let currentUser = null;
+    let orders = [];
+    let clientRequests = [];
+
+    const el = {
+      authForm: document.querySelector("#authForm"),
+      username: document.querySelector("#username"),
+      password: document.querySelector("#password"),
+      productionRequestOrder: document.querySelector("#productionRequestOrder"),
+      productionRequestType: document.querySelector("#productionRequestType"),
+      productionRequestEmail: document.querySelector("#productionRequestEmail"),
+      productionRequestMessage: document.querySelector("#productionRequestMessage"),
+      createProductionRequestBtn: document.querySelector("#createProductionRequestBtn"),
+      emailProductionRequestBtn: document.querySelector("#emailProductionRequestBtn"),
+      clientRequestList: document.querySelector("#clientRequestList"),
+      requestCount: document.querySelector("#requestCount"),
+      statusFilter: document.querySelector("#statusFilter"),
+      refreshBtn: document.querySelector("#refreshBtn"),
+      productionBtn: document.querySelector("#productionBtn"),
+      logoutBtn: document.querySelector("#logoutBtn"),
+      toast: document.querySelector("#toast")
+    };
+
+    function initSupabase() {
+      const config = window.SEAM_RIO_SUPABASE || {};
+      if (!config.url || !config.anonKey || !window.supabase?.createClient) {
+        throw new Error("Supabase não configurado.");
+      }
+      cloudDb = window.supabase.createClient(config.url, config.anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false }
+      });
+    }
+
+    async function hashPassword(password, salt) {
+      const data = new TextEncoder().encode(`${salt}:${password}`);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function getUserByUsername(username) {
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("username", username.trim().toLowerCase())
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    async function validateUser(username, password) {
+      const user = await getUserByUsername(username);
+      if (!user) return null;
+      const passwordHash = await hashPassword(password, user.salt);
+      if (passwordHash !== user.password_hash) return null;
+      if (user.role === "cliente") throw new Error("Solicitações liberadas apenas para operação e administração.");
+      return user;
+    }
+
+    async function getSessionUser() {
+      const username = sessionStorage.getItem("seamRioUser");
+      if (!username) return null;
+      const user = await getUserByUsername(username);
+      if (!user || user.role === "cliente") return null;
+      return user;
+    }
+
+    async function logAudit(action, entity = "", entityId = "", description = "", payload = {}) {
+      try {
+        await cloudDb.from(AUDIT_TABLE).insert({
+          id: crypto.randomUUID(),
+          username: currentUser?.username || sessionStorage.getItem("seamRioUser") || "",
+          role: currentUser?.role || "",
+          action,
+          entity,
+          entity_id: String(entityId || ""),
+          description,
+          page: "solicitacoes.html",
+          payload
+        });
+      } catch (error) {
+        console.warn("Nao foi possivel registrar auditoria.", error);
+      }
+    }
+
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function requestTypeLabel(type) {
+      return {
+        novo_pedido: "Novo pedido",
+        producao: "Solicitação da produção",
+        mensagem: "Mensagem",
+        interromper: "Interromper produção",
+        mudanca: "Mudança no produto"
+      }[type] || "Solicitação";
+    }
+
+    async function loadOrders() {
+      const { data, error } = await cloudDb
+        .from(ORDER_TABLE)
+        .select("payload")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      orders = (data || []).map(row => row.payload).filter(Boolean);
+    }
+
+    async function loadClientRequests() {
+      const { data, error } = await cloudDb
+        .from(REQUEST_TABLE)
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      clientRequests = data || [];
+    }
+
+    async function updateClientRequestStatus(requestId, status) {
+      const { error } = await cloudDb
+        .from(REQUEST_TABLE)
+        .update({ status })
+        .eq("id", requestId);
+      if (error) throw error;
+      await logAudit("update", REQUEST_TABLE, requestId, "Solicitação marcada como resolvida", { status });
+    }
+
+    function renderProductionRequestOptions() {
+      if (!orders.length) {
+        el.productionRequestOrder.innerHTML = `<option value="">Nenhum pedido cadastrado</option>`;
+        el.productionRequestEmail.value = "";
+        return;
+      }
+      const previous = el.productionRequestOrder.value || orders[0].id;
+      el.productionRequestOrder.innerHTML = orders.map(order => (
+        `<option value="${order.id}">${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</option>`
+      )).join("");
+      el.productionRequestOrder.value = orders.some(order => order.id === previous) ? previous : orders[0].id;
+      const order = orders.find(item => item.id === el.productionRequestOrder.value);
+      el.productionRequestEmail.value = order?.clientEmail || "";
+    }
+
+    async function createProductionRequest(sendEmailAfterCreate = false) {
+      const order = orders.find(item => item.id === el.productionRequestOrder.value) || {};
+      const message = el.productionRequestMessage.value.trim();
+      const clientEmail = normalizeEmail(el.productionRequestEmail.value || order.clientEmail);
+      if (!clientEmail) throw new Error("Informe o e-mail do cliente.");
+      if (!message) throw new Error("Escreva a solicitação para o cliente.");
+      const request = {
+        id: crypto.randomUUID(),
+        order_id: order.id || null,
+        order_number: order.orderNumber || "",
+        client_email: clientEmail,
+        client_name: order.clientName || "",
+        type: el.productionRequestType.value,
+        message,
+        response: "",
+        responded_at: null,
+        status: "pendente",
+        direction: "producao",
+        created_at: new Date().toISOString()
+      };
+      const { error } = await cloudDb.from(REQUEST_TABLE).insert(request);
+      if (error) throw error;
+      await logAudit("insert", REQUEST_TABLE, request.id, "Solicitação criada pela produção", {
+        orderNumber: request.order_number,
+        clientEmail: request.client_email,
+        type: request.type,
+        sendEmail: sendEmailAfterCreate
+      });
+      el.productionRequestMessage.value = "";
+      await refresh();
+      if (sendEmailAfterCreate) await sendProductionRequestEmail(request);
+      return request;
+    }
+
+    async function getClientUserByEmail(email) {
+      const { data, error } = await cloudDb
+        .from(USER_TABLE)
+        .select("*")
+        .eq("role", "cliente")
+        .eq("client_email", normalizeEmail(email))
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    function temporaryPassword() {
+      return "Seam" + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    async function resetClientPassword(user, password) {
+      const salt = crypto.randomUUID();
+      const passwordHash = await hashPassword(password, salt);
+      const { error } = await cloudDb
+        .from(USER_TABLE)
+        .update({ salt, password_hash: passwordHash })
+        .eq("id", user.id);
+      if (error) throw error;
+    }
+
+    function clientPortalUrl(username) {
+      const url = new URL("cliente.html", window.location.href);
+      url.searchParams.set("usuario", username);
+      return url.href;
+    }
+
+    async function sendProductionRequestEmail(request) {
+      const user = await getClientUserByEmail(request.client_email);
+      if (!user) throw new Error("Não encontrei usuário cliente com esse e-mail.");
+      const password = temporaryPassword();
+      await resetClientPassword(user, password);
+      const link = clientPortalUrl(user.username);
+      const subject = `Solicitação Seam Rio - pedido ${request.order_number || ""}`;
+      const body = [
+        `Olá, ${request.client_name || user.client_name || "cliente"}!`,
+        "",
+        `Temos uma solicitação da produção sobre o pedido ${request.order_number || ""}:`,
+        "",
+        request.message,
+        "",
+        "Acesse a área do cliente para responder:",
+        link,
+        "",
+        `Usuário: ${user.username}`,
+        `Senha temporária: ${password}`,
+        "",
+        "Após entrar, responda na seção Solicitações da produção."
+      ].join("\n");
+      window.location.href = `mailto:${encodeURIComponent(request.client_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      showToast("E-mail criado com senha temporária do cliente.");
+    }
+
+    function statusForDisplay(request) {
+      if (request.response && request.status !== "resolvido") return "respondida";
+      return request.status || "pendente";
+    }
+
+    function renderClientRequests() {
+      const status = el.statusFilter.value;
+      const visible = clientRequests.filter(request => {
+        if (!status) return true;
+        return statusForDisplay(request) === status;
+      });
+      el.requestCount.textContent = `${visible.length} solicitaç${visible.length === 1 ? "ão" : "ões"}`;
+      if (!visible.length) {
+        el.clientRequestList.innerHTML = `<div class="empty">Nenhuma solicitação encontrada.</div>`;
+        return;
+      }
+      el.clientRequestList.innerHTML = visible.map(request => `
+        <div class="request-row">
+          <div>
+            <strong>${requestTypeLabel(request.type)} · ${escapeHtml(request.order_number || "Sem pedido")}</strong>
+            <div class="small">${escapeHtml(request.client_name || "")} · ${escapeHtml(request.client_email || "")} · ${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
+            <div class="small">${escapeHtml(request.message || "")}</div>
+            ${request.response ? `<div class="request-reply"><strong>Resposta do cliente:</strong><br>${escapeHtml(request.response)}<div class="small">${request.responded_at ? new Date(request.responded_at).toLocaleString("pt-BR") : ""}</div></div>` : ""}
+          </div>
+          <div class="actions-row">
+            <span class="pill ${request.status === "resolvido" ? "done" : request.type === "interromper" ? "late" : ""}">${statusForDisplay(request)}</span>
+            ${request.direction === "producao" ? `<button class="btn" type="button" data-email-request="${request.id}">Enviar e-mail</button>` : ""}
+            ${request.status === "resolvido" ? "" : `<button class="btn" type="button" data-resolve-request="${request.id}">Resolver</button>`}
+          </div>
+        </div>
+      `).join("");
+
+      el.clientRequestList.querySelectorAll("[data-email-request]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const request = clientRequests.find(item => item.id === button.dataset.emailRequest);
+          if (!request) return;
+          try {
+            await sendProductionRequestEmail(request);
+          } catch (error) {
+            showToast(error.message || "Não foi possível gerar o e-mail.");
+          }
+        });
+      });
+
+      el.clientRequestList.querySelectorAll("[data-resolve-request]").forEach(button => {
+        button.addEventListener("click", async () => {
+          try {
+            await updateClientRequestStatus(button.dataset.resolveRequest, "resolvido");
+            await refresh();
+            showToast("Solicitação marcada como resolvida.");
+          } catch (error) {
+            showToast(error.message || "Não foi possível atualizar a solicitação.");
+          }
+        });
+      });
+    }
+
+    async function refresh() {
+      await Promise.all([loadOrders(), loadClientRequests()]);
+      renderProductionRequestOptions();
+      renderClientRequests();
+    }
+
+    async function enterWithUser(user, logLogin = false) {
+      currentUser = user;
+      sessionStorage.setItem("seamRioUser", user.username);
+      if (logLogin) await logAudit("login", USER_TABLE, user.id, "Login em solicitações");
+      document.body.classList.remove("auth-locked");
+      await refresh();
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 3000);
+    }
+
+    el.authForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const user = await validateUser(el.username.value, el.password.value);
+        if (!user) throw new Error("Usuário ou senha inválidos.");
+        await enterWithUser(user, true);
+      } catch (error) {
+        showToast(error.message || "Não foi possível entrar.");
+      }
+    });
+
+    el.productionRequestOrder.addEventListener("change", () => {
+      const order = orders.find(item => item.id === el.productionRequestOrder.value);
+      el.productionRequestEmail.value = order?.clientEmail || "";
+    });
+    el.createProductionRequestBtn.addEventListener("click", async () => {
+      try {
+        await createProductionRequest(false);
+        showToast("Solicitação criada para o cliente.");
+      } catch (error) {
+        showToast(error.message || "Não foi possível criar a solicitação.");
+      }
+    });
+    el.emailProductionRequestBtn.addEventListener("click", async () => {
+      try {
+        await createProductionRequest(true);
+      } catch (error) {
+        showToast(error.message || "Não foi possível criar e enviar a solicitação.");
+      }
+    });
+    el.statusFilter.addEventListener("change", renderClientRequests);
+    el.refreshBtn.addEventListener("click", () => refresh().catch(error => showToast(error.message || "Não foi possível atualizar.")));
+    el.productionBtn.addEventListener("click", () => { window.location.href = "producao.html"; });
+    el.logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      sessionStorage.removeItem("seamRioUser");
+      el.password.value = "";
+      document.body.classList.add("auth-locked");
+    });
+
+    try {
+      initSupabase();
+      getSessionUser().then(user => {
+        if (user) return enterWithUser(user);
+      }).catch(() => sessionStorage.removeItem("seamRioUser"));
+    } catch (error) {
+      showToast(error.message);
+    }
+  </script>
+  <script src="seam-theme.js"></script>
+</body>
+</html>
