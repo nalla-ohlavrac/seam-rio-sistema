@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GestÃ£o de ProduÃ§Ã£o de BiquÃ­nis</title>
+  <title>Gestão de Produção de Biquínis</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
   <link rel="stylesheet" href="seam-theme.css">
@@ -687,10 +687,10 @@
     <div class="auth-card">
       <img class="auth-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
       <h1 id="authTitle">Acesso</h1>
-      <p id="authDescription">Entre com seu usuÃ¡rio e senha para abrir o sistema.</p>
+      <p id="authDescription">Entre com seu usuário e senha para abrir o sistema.</p>
       <form class="auth-form" id="authForm">
         <div class="field">
-          <label for="authUsername">UsuÃ¡rio</label>
+          <label for="authUsername">Usuário</label>
           <input id="authUsername" autocomplete="username" required>
         </div>
         <div class="field">
@@ -712,8 +712,8 @@
       <div class="brand-block">
         <img class="brand-logo" src="seam-rio-logo.png" alt="Seam Rio private label">
         <div>
-          <h1>Seam Rio ConfecÃ§Ã£o</h1>
-          <p class="subtitle">Cadastro de clientes, pedidos, quantidades por tipo de peÃ§a, controle das etapas e geraÃ§Ã£o automÃ¡tica de e-mails de acompanhamento.</p>
+          <h1>Seam Rio Confecção</h1>
+          <p class="subtitle">Cadastro de clientes, pedidos, quantidades por tipo de peça, controle das etapas e geração automática de e-mails de acompanhamento.</p>
         </div>
       </div>
       <div class="toolbar">
@@ -725,20 +725,20 @@
         <input id="importFile" type="file" accept="application/json" hidden>
         <button class="btn" id="dashboardBtn" type="button">Dashboard TV</button>
         <button class="btn" id="financeBtn" type="button" hidden>Financeiro</button>
-        <button class="btn" id="manageUsersBtn" type="button" hidden>UsuÃ¡rios</button>
+        <button class="btn" id="manageUsersBtn" type="button" hidden>Usuários</button>
         <button class="btn" id="logoutBtn" type="button">Sair</button>
       </div>
     </header>
 
     <section class="panel user-admin" id="userAdminPanel">
       <div class="panel-head">
-        <h2>AdministraÃ§Ã£o de usuÃ¡rios</h2>
+        <h2>Administração de usuários</h2>
         <span class="small">Somente administrador</span>
       </div>
       <div class="form-wrap">
         <div class="grid-3">
           <div class="field">
-            <label for="newUsername">Novo usuÃ¡rio</label>
+            <label for="newUsername">Novo usuário</label>
             <input id="newUsername" autocomplete="off">
           </div>
           <div class="field">
@@ -757,7 +757,7 @@
         <div class="grid-2" style="margin-top:10px">
           <div class="field">
             <label for="newUserClientName">Nome do cliente</label>
-            <input id="newUserClientName" autocomplete="off" placeholder="ObrigatÃ³rio para usuÃ¡rio cliente">
+            <input id="newUserClientName" autocomplete="off" placeholder="Obrigatório para usuário cliente">
           </div>
           <div class="field">
             <label for="newUserClientEmail">E-mail do cliente</label>
@@ -766,27 +766,27 @@
         </div>
         <div class="actions-row">
           <div class="left-actions">
-            <button class="btn primary" id="createUserBtn" type="button">Cadastrar usuÃ¡rio</button>
+            <button class="btn primary" id="createUserBtn" type="button">Cadastrar usuário</button>
           </div>
         </div>
         <div class="user-list" id="userList"></div>
       </div>
     </section>
 
-    <section class="summary-grid" id="summarySection" aria-label="Resumo da produÃ§Ã£o">
+    <section class="summary-grid" id="summarySection" aria-label="Resumo da produção">
       <div class="metric"><span>Pedidos ativos</span><strong id="activeCount">0</strong></div>
-      <div class="metric"><span>PeÃ§as em produÃ§Ã£o</span><strong id="piecesCount">0</strong></div>
+      <div class="metric"><span>Peças em produção</span><strong id="piecesCount">0</strong></div>
       <div class="metric"><span>Valor em aberto</span><strong id="openValue">R$ 0,00</strong></div>
-      <div class="metric"><span>Entregas prÃ³ximas</span><strong id="dueSoon">0</strong></div>
+      <div class="metric"><span>Entregas próximas</span><strong id="dueSoon">0</strong></div>
       <div class="metric"><span>Prazo mais urgente</span><strong id="urgentCountdown">--</strong></div>
     </section>
 
     <section class="panel chart-panel" id="chartSection">
       <div class="panel-head">
-        <h2>Acompanhamento da produÃ§Ã£o</h2>
+        <h2>Acompanhamento da produção</h2>
         <div class="chart-legend">
           <span class="legend-item"><span class="legend-swatch"></span>Pedidos</span>
-          <span class="legend-item"><span class="legend-swatch pieces"></span>PeÃ§as</span>
+          <span class="legend-item"><span class="legend-swatch pieces"></span>Peças</span>
         </div>
       </div>
       <div class="form-wrap">
@@ -840,8 +840,8 @@
               </div>
             </div>
             <div class="field" style="margin-top:10px">
-              <label for="clientAddress">EndereÃ§o completo</label>
-              <textarea id="clientAddress" placeholder="Rua, nÃºmero, bairro, cidade, UF, CEP"></textarea>
+              <label for="clientAddress">Endereço completo</label>
+              <textarea id="clientAddress" placeholder="Rua, número, bairro, cidade, UF, CEP"></textarea>
             </div>
           </section>
 
@@ -849,7 +849,7 @@
             <h3 class="section-title">Pedido</h3>
             <div class="grid-4">
               <div class="field">
-                <label for="orderNumber">NÃºmero <span class="required">*</span></label>
+                <label for="orderNumber">Número <span class="required">*</span></label>
                 <input id="orderNumber" required>
               </div>
               <div class="field">
@@ -857,11 +857,11 @@
                 <input id="orderDate" type="date">
               </div>
               <div class="field">
-                <label for="startDate">InÃ­cio dos trabalhos</label>
+                <label for="startDate">Início dos trabalhos</label>
                 <input id="startDate" type="date">
               </div>
               <div class="field">
-                <label for="dueDate">PrevisÃ£o de tÃ©rmino</label>
+                <label for="dueDate">Previsão de término</label>
                 <input id="dueDate" type="date">
               </div>
             </div>
@@ -871,7 +871,7 @@
                 <input id="orderValue" type="number" min="0" step="0.01" placeholder="0,00">
               </div>
               <div class="field">
-                <label for="totalPieces">PeÃ§as totais</label>
+                <label for="totalPieces">Peças totais</label>
                 <input id="totalPieces" type="number" min="0" step="1" readonly>
               </div>
             </div>
@@ -881,8 +881,8 @@
             <h3 class="section-title">Contador de entrega</h3>
             <div class="delivery-panel" id="deliveryPanel">
               <div>
-                <strong id="deliveryCountdown">Sem previsÃ£o</strong>
-                <span id="deliveryCountdownDetail">Informe a previsÃ£o de tÃ©rmino para acompanhar o prazo.</span>
+                <strong id="deliveryCountdown">Sem previsão</strong>
+                <span id="deliveryCountdownDetail">Informe a previsão de término para acompanhar o prazo.</span>
               </div>
               <span class="pill" id="deliveryStatus">Prazo</span>
             </div>
@@ -900,7 +900,7 @@
                 <input id="qtyTops" class="qty" type="number" min="0" step="1" value="0">
               </div>
               <div class="field">
-                <label for="qtyCoverups">SaÃ­das de praia</label>
+                <label for="qtyCoverups">Saídas de praia</label>
                 <input id="qtyCoverups" class="qty" type="number" min="0" step="1" value="0">
               </div>
               <div class="field">
@@ -914,7 +914,7 @@
             <h3 class="section-title">Nota fiscal de remessa de material</h3>
             <div class="grid-4">
               <div class="field">
-                <label for="remittanceInvoiceNumber">NÃºmero da NF</label>
+                <label for="remittanceInvoiceNumber">Número da NF</label>
                 <input id="remittanceInvoiceNumber">
               </div>
               <div class="field">
@@ -931,8 +931,8 @@
               </div>
             </div>
             <div class="field" style="margin-top:10px">
-              <label for="remittanceInvoiceNotes">ObservaÃ§Ãµes da remessa</label>
-              <textarea id="remittanceInvoiceNotes" placeholder="Materiais enviados, volumes, transportadora, chave de acesso ou observaÃ§Ãµes fiscais..."></textarea>
+              <label for="remittanceInvoiceNotes">Observações da remessa</label>
+              <textarea id="remittanceInvoiceNotes" placeholder="Materiais enviados, volumes, transportadora, chave de acesso ou observações fiscais..."></textarea>
             </div>
           </section>
 
@@ -940,7 +940,7 @@
             <h3 class="section-title">Nota fiscal de entrega e pagamento</h3>
             <div class="grid-4">
               <div class="field">
-                <label for="deliveryInvoiceNumber">NÃºmero da NF</label>
+                <label for="deliveryInvoiceNumber">Número da NF</label>
                 <input id="deliveryInvoiceNumber">
               </div>
               <div class="field">
@@ -958,19 +958,19 @@
             </div>
             <div class="grid-4" style="margin-top:10px">
               <div class="field">
-                <label for="paymentType">CondiÃ§Ã£o</label>
+                <label for="paymentType">Condição</label>
                 <select id="paymentType">
-                  <option value="avista">Ã€ vista</option>
+                  <option value="avista">À vista</option>
                   <option value="prazo">A prazo</option>
                 </select>
               </div>
               <div class="field">
                 <label for="paymentInstallments">Parcelas</label>
                 <select id="paymentInstallments">
-                  <option value="1">1 vez Â· 15 dias</option>
-                  <option value="2">2 vezes Â· 15 e 30 dias</option>
-                  <option value="3">3 vezes Â· 15, 30 e 45 dias</option>
-                  <option value="4">4 vezes Â· 15, 30, 45 e 60 dias</option>
+                  <option value="1">1 vez · 15 dias</option>
+                  <option value="2">2 vezes · 15 e 30 dias</option>
+                  <option value="3">3 vezes · 15, 30 e 45 dias</option>
+                  <option value="4">4 vezes · 15, 30, 45 e 60 dias</option>
                 </select>
               </div>
               <div class="field">
@@ -995,8 +995,8 @@
               <textarea id="paymentSchedule" readonly></textarea>
             </div>
             <div class="field" style="margin-top:10px">
-              <label for="deliveryInvoiceNotes">ObservaÃ§Ãµes da entrega/pagamento</label>
-              <textarea id="deliveryInvoiceNotes" placeholder="Chave de acesso, boleto, comprovantes, observaÃ§Ãµes financeiras ou fiscais..."></textarea>
+              <label for="deliveryInvoiceNotes">Observações da entrega/pagamento</label>
+              <textarea id="deliveryInvoiceNotes" placeholder="Chave de acesso, boleto, comprovantes, observações financeiras ou fiscais..."></textarea>
             </div>
           </section>
 
@@ -1028,7 +1028,7 @@
           </section>
 
           <section>
-            <h3 class="section-title">ObservaÃ§Ãµes internas</h3>
+            <h3 class="section-title">Observações internas</h3>
             <textarea id="notes" placeholder="Medidas, tecido, cores, detalhes de entrega, combinados com a cliente..."></textarea>
           </section>
 
@@ -1063,9 +1063,9 @@
     const CLOUD_AUDIT_TABLE = "audit_logs";
     const stages = [
       { id: "pilotagem", label: "Pilotagem" },
-      { id: "inicio-producao", label: "InÃ­cio de produÃ§Ã£o" },
+      { id: "inicio-producao", label: "Início de produção" },
       { id: "arremate", label: "Arremate" },
-      { id: "finalizacao", label: "FinalizaÃ§Ã£o" },
+      { id: "finalizacao", label: "Finalização" },
       { id: "entrega", label: "Entrega" },
       { id: "pagamento", label: "Pagamento" }
     ];
@@ -1077,7 +1077,7 @@
         clientEmail: "marina@example.com",
         clientPhone: "(11) 99999-0000",
         clientDocument: "",
-        clientAddress: "Rua das Flores, 120 - SÃ£o Paulo, SP",
+        clientAddress: "Rua das Flores, 120 - São Paulo, SP",
         orderNumber: "PED-001",
         orderDate: today(),
         startDate: today(),
@@ -1102,7 +1102,7 @@
         paymentStatus: "pendente",
         deliveryInvoiceNotes: "",
         stage: "inicio-producao",
-        notes: "ColeÃ§Ã£o cÃ¡psula com cores sortidas.",
+        notes: "Coleção cápsula com cores sortidas.",
         updatedAt: new Date().toISOString()
       }
     ];
@@ -1404,12 +1404,12 @@
     }
 
     async function createProductionRequest(sendEmailAfterCreate = false) {
-      if (!usingSupabase) throw new Error("SolicitaÃ§Ãµes online precisam do Supabase.");
+      if (!usingSupabase) throw new Error("Solicitações online precisam do Supabase.");
       const order = orders.find(item => item.id === el.productionRequestOrder.value) || orderFromForm();
       const message = el.productionRequestMessage.value.trim();
       const clientEmail = normalizeEmail(el.productionRequestEmail.value || order.clientEmail);
       if (!clientEmail) throw new Error("Informe o e-mail do cliente.");
-      if (!message) throw new Error("Escreva a solicitaÃ§Ã£o para o cliente.");
+      if (!message) throw new Error("Escreva a solicitação para o cliente.");
       const request = {
         id: crypto.randomUUID(),
         order_id: order.id || null,
@@ -1472,28 +1472,28 @@
 
     async function sendProductionRequestEmail(request) {
       const user = await getClientUserByEmail(request.client_email);
-      if (!user) throw new Error("NÃ£o encontrei usuÃ¡rio cliente com esse e-mail.");
+      if (!user) throw new Error("Não encontrei usuário cliente com esse e-mail.");
       const password = temporaryPassword();
       await resetClientPassword(user, password);
       const link = clientPortalUrl(user.username);
-      const subject = `SolicitaÃ§Ã£o Seam Rio - pedido ${request.order_number || ""}`;
+      const subject = `Solicitação Seam Rio - pedido ${request.order_number || ""}`;
       const body = [
-        `OlÃ¡, ${request.client_name || user.client_name || "cliente"}!`,
+        `Olá, ${request.client_name || user.client_name || "cliente"}!`,
         "",
-        `Temos uma solicitaÃ§Ã£o da produÃ§Ã£o sobre o pedido ${request.order_number || ""}:`,
+        `Temos uma solicitação da produção sobre o pedido ${request.order_number || ""}:`,
         "",
         request.message,
         "",
-        "Acesse a Ã¡rea do cliente para responder:",
+        "Acesse a área do cliente para responder:",
         link,
         "",
-        `UsuÃ¡rio: ${user.username}`,
-        `Senha temporÃ¡ria: ${password}`,
+        `Usuário: ${user.username}`,
+        `Senha temporária: ${password}`,
         "",
-        "ApÃ³s entrar, responda na seÃ§Ã£o SolicitaÃ§Ãµes da produÃ§Ã£o."
+        "Após entrar, responda na seção Solicitações da produção."
       ].join("\n");
       window.location.href = `mailto:${encodeURIComponent(request.client_email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      showToast("E-mail criado com senha temporÃ¡ria do cliente.");
+      showToast("E-mail criado com senha temporária do cliente.");
     }
 
     async function getUsers() {
@@ -1551,11 +1551,11 @@
 
     async function createUser(username, password, role = "operador", clientName = "", clientEmail = "") {
       const cleanUsername = username.trim().toLowerCase();
-      if (!cleanUsername) throw new Error("Informe o nome do usuÃ¡rio.");
+      if (!cleanUsername) throw new Error("Informe o nome do usuário.");
       const cleanClientEmail = clientEmail.trim().toLowerCase();
       if (role === "cliente" && !cleanClientEmail) throw new Error("Informe o e-mail do cliente.");
       const existing = await getUserByUsername(cleanUsername);
-      if (existing) throw new Error("UsuÃ¡rio jÃ¡ cadastrado.");
+      if (existing) throw new Error("Usuário já cadastrado.");
       const salt = crypto.randomUUID();
       const user = {
         id: crypto.randomUUID(),
@@ -1611,7 +1611,7 @@
       const passwordHash = await hashPassword(password, user.salt);
       if (passwordHash !== savedHash) return null;
       if ((user.role || "operador") === "cliente") {
-        throw new Error("Cliente deve acessar pela pÃ¡gina cliente.html.");
+        throw new Error("Cliente deve acessar pela página cliente.html.");
       }
       return {
         id: user.id,
@@ -1679,8 +1679,8 @@
         <div class="user-row">
           <div>
             <strong>${escapeHtml(user.username)}</strong>
-            <div class="small">${user.role === "admin" ? "Administrador" : user.role === "cliente" ? "Cliente" : "Operador"} Â· criado em ${user.createdAt || user.created_at ? new Date(user.createdAt || user.created_at).toLocaleDateString("pt-BR") : "sem data"}</div>
-            ${user.role === "cliente" ? `<div class="small">${escapeHtml(user.clientName || user.client_name || "")} Â· ${escapeHtml(user.clientEmail || user.client_email || "")}</div>` : ""}
+            <div class="small">${user.role === "admin" ? "Administrador" : user.role === "cliente" ? "Cliente" : "Operador"} · criado em ${user.createdAt || user.created_at ? new Date(user.createdAt || user.created_at).toLocaleDateString("pt-BR") : "sem data"}</div>
+            ${user.role === "cliente" ? `<div class="small">${escapeHtml(user.clientName || user.client_name || "")} · ${escapeHtml(user.clientEmail || user.client_email || "")}</div>` : ""}
           </div>
           <div class="user-actions">
             <span class="pill ${user.role === "admin" ? "done" : ""}">${user.role === "admin" ? "Admin" : user.role === "cliente" ? "Cliente" : "Operador"}</span>
@@ -1696,21 +1696,21 @@
           const userToDelete = usersNow.find(user => user.id === userId);
           if (!userToDelete) return;
           if (userToDelete.id === currentUser.id || userToDelete.username === currentUser.username) {
-            showToast("VocÃª nÃ£o pode excluir o usuÃ¡rio que estÃ¡ logado.");
+            showToast("Você não pode excluir o usuário que está logado.");
             return;
           }
           const adminCount = usersNow.filter(user => user.role === "admin").length;
           if (userToDelete.role === "admin" && adminCount <= 1) {
-            showToast("NÃ£o Ã© possÃ­vel excluir o Ãºltimo administrador.");
+            showToast("Não é possível excluir o último administrador.");
             return;
           }
-          if (!confirm(`Excluir o usuÃ¡rio ${userToDelete.username}?`)) return;
+          if (!confirm(`Excluir o usuário ${userToDelete.username}?`)) return;
           try {
             await deleteUser(userId);
             await renderUserList();
-            showToast("UsuÃ¡rio excluÃ­do.");
+            showToast("Usuário excluído.");
           } catch (error) {
-            showToast(error.message || "NÃ£o foi possÃ­vel excluir o usuÃ¡rio.");
+            showToast(error.message || "Não foi possível excluir o usuário.");
           }
         });
       });
@@ -1728,14 +1728,14 @@
       }
       el.authTitle.textContent = isFirstAccess ? "Criar acesso" : "Acesso";
       el.authDescription.textContent = isFirstAccess
-        ? "Cadastre o primeiro usuÃ¡rio e senha para proteger o sistema."
-        : "Entre com seu usuÃ¡rio e senha para abrir o sistema.";
-      el.authSubmitBtn.textContent = isFirstAccess ? "Criar usuÃ¡rio" : "Entrar";
+        ? "Cadastre o primeiro usuário e senha para proteger o sistema."
+        : "Entre com seu usuário e senha para abrir o sistema.";
+      el.authSubmitBtn.textContent = isFirstAccess ? "Criar usuário" : "Entrar";
       el.confirmPasswordField.hidden = !isFirstAccess;
       el.authPasswordConfirm.required = isFirstAccess;
       el.authPassword.autocomplete = isFirstAccess ? "new-password" : "current-password";
       el.authHint.textContent = isFirstAccess
-        ? `Guarde essa senha. Ela serÃ¡ necessÃ¡ria para abrir o sistema ${usingSupabase ? "online." : "neste navegador."}`
+        ? `Guarde essa senha. Ela será necessária para abrir o sistema ${usingSupabase ? "online." : "neste navegador."}`
         : usingSupabase ? "Modo online: dados salvos no Supabase." : "Os dados continuam salvos no banco local deste navegador.";
 
       el.authForm.addEventListener("submit", async event => {
@@ -1745,16 +1745,16 @@
           const password = el.authPassword.value;
           if (isFirstAccess) {
             if (password.length < 4) throw new Error("Use uma senha com pelo menos 4 caracteres.");
-            if (password !== el.authPasswordConfirm.value) throw new Error("As senhas nÃ£o conferem.");
+            if (password !== el.authPasswordConfirm.value) throw new Error("As senhas não conferem.");
             const user = await createUser(username, password, "admin");
             await unlockSystem(user, true);
             return;
           }
           const user = await validateUser(username, password);
-          if (!user) throw new Error("UsuÃ¡rio ou senha invÃ¡lidos.");
+          if (!user) throw new Error("Usuário ou senha inválidos.");
           await unlockSystem(user, true);
         } catch (error) {
-          showToast(error.message || "NÃ£o foi possÃ­vel autenticar.");
+          showToast(error.message || "Não foi possível autenticar.");
         }
       });
     }
@@ -1803,7 +1803,7 @@
 
       return offsets.map((offset, index) => {
         const dueDate = addDaysToDate(baseDate, offset);
-        const dueLabel = offset === 0 ? "Ã  vista" : `${offset} dias`;
+        const dueLabel = offset === 0 ? "à vista" : `${offset} dias`;
         return `${index + 1}/${offsets.length} - ${formatDate(dueDate)} (${dueLabel}) - ${formatMoney(installmentValue)} - ${methodLabel}`;
       }).join("\n");
     }
@@ -1829,7 +1829,7 @@
         return {
           text: "Entregue",
           detail: order.stage === "pagamento" ? "Pedido entregue e em etapa de pagamento." : "Pedido marcado como entregue.",
-          status: order.stage === "pagamento" ? "Pagamento" : "ConcluÃ­do",
+          status: order.stage === "pagamento" ? "Pagamento" : "Concluído",
           className: "done",
           urgentValue: Infinity
         };
@@ -1837,8 +1837,8 @@
 
       if (!order.dueDate) {
         return {
-          text: "Sem previsÃ£o",
-          detail: "Informe a previsÃ£o de tÃ©rmino para acompanhar o prazo.",
+          text: "Sem previsão",
+          detail: "Informe a previsão de término para acompanhar o prazo.",
           status: "Prazo",
           className: "",
           urgentValue: Infinity
@@ -1856,8 +1856,8 @@
 
       if (diffMs < 0) {
         return {
-          text: days <= 1 ? "Atrasado hÃ¡ 1 dia" : `Atrasado hÃ¡ ${days} dias`,
-          detail: `PrevisÃ£o era ${formatDate(order.dueDate)}.`,
+          text: days <= 1 ? "Atrasado há 1 dia" : `Atrasado há ${days} dias`,
+          detail: `Previsão era ${formatDate(order.dueDate)}.`,
           status: "Atrasado",
           className: "late",
           urgentValue: diffMs
@@ -1878,7 +1878,7 @@
         return {
           text: "1 dia restante",
           detail: `Entrega prevista para ${formatDate(order.dueDate)}.`,
-          status: "PrÃ³ximo",
+          status: "Próximo",
           className: "soon",
           urgentValue: diffMs
         };
@@ -1887,7 +1887,7 @@
       return {
         text: `${days} dias restantes`,
         detail: `Entrega prevista para ${formatDate(order.dueDate)}.`,
-        status: days <= 7 ? "PrÃ³ximo" : "No prazo",
+        status: days <= 7 ? "Próximo" : "No prazo",
         className: days <= 7 ? "soon" : "",
         urgentValue: diffMs
       };
@@ -2011,13 +2011,13 @@
           <button class="order-card ${order.id === selectedId ? "active" : ""}" type="button" data-id="${order.id}">
             <div class="order-top">
               <div>
-                <div class="order-title">${escapeHtml(order.orderNumber)} Â· ${escapeHtml(order.clientName)}</div>
-                <div class="small">${escapeHtml(order.clientEmail || "")} ${order.clientPhone ? "Â· " + escapeHtml(order.clientPhone) : ""}</div>
+                <div class="order-title">${escapeHtml(order.orderNumber)} · ${escapeHtml(order.clientName)}</div>
+                <div class="small">${escapeHtml(order.clientEmail || "")} ${order.clientPhone ? "· " + escapeHtml(order.clientPhone) : ""}</div>
               </div>
               <span class="pill ${badgeClass}">${stageLabel(order.stage)}</span>
             </div>
             <div class="mini-stats">
-              <span><strong>${totalPieces(order)}</strong> peÃ§as</span>
+              <span><strong>${totalPieces(order)}</strong> peças</span>
               <span><strong>${escapeHtml(countdown.text)}</strong> prazo</span>
               <span><strong>${formatMoney(order.orderValue)}</strong> valor</span>
             </div>
@@ -2038,9 +2038,9 @@
       return {
         top: "Top",
         calcinha: "Calcinha",
-        saida: "SaÃ­da de praia",
+        saida: "Saída de praia",
         conjunto: "Conjunto",
-        maio: "MaiÃ´",
+        maio: "Maiô",
         vestido: "Vestido",
         short: "Short"
       }[type] || "Produto";
@@ -2066,7 +2066,7 @@
         <div class="user-row">
           <div>
             <strong>${escapeHtml(product.name)}</strong>
-            <div class="small">${productTypeLabel(product.type)}${product.code ? " Â· " + escapeHtml(product.code) : ""} Â· ${formatMoney(product.price)}</div>
+            <div class="small">${productTypeLabel(product.type)}${product.code ? " · " + escapeHtml(product.code) : ""} · ${formatMoney(product.price)}</div>
             ${product.notes ? `<div class="small">${escapeHtml(product.notes)}</div>` : ""}
           </div>
           <div class="user-actions">
@@ -2080,7 +2080,7 @@
           products = products.filter(product => product.id !== button.dataset.deleteProduct);
           await saveProducts();
           renderClientArea();
-          showToast("Produto excluÃ­do.");
+          showToast("Produto excluído.");
         });
       });
     }
@@ -2091,7 +2091,7 @@
         return;
       }
       el.clientOrderProduct.innerHTML = products.map(product => (
-        `<option value="${product.id}">${escapeHtml(product.name)} Â· ${productTypeLabel(product.type)} Â· ${formatMoney(product.price)}</option>`
+        `<option value="${product.id}">${escapeHtml(product.name)} · ${productTypeLabel(product.type)} · ${formatMoney(product.price)}</option>`
       )).join("");
     }
 
@@ -2122,7 +2122,7 @@
     function renderClientOrderList() {
       const clientOrders = orders.filter(order => order.source === "cliente" || order.productId);
       if (!clientOrders.length) {
-        el.clientOrderList.innerHTML = `<div class="empty">Nenhum pedido criado pela Ã¡rea do cliente.</div>`;
+        el.clientOrderList.innerHTML = `<div class="empty">Nenhum pedido criado pela área do cliente.</div>`;
         return;
       }
       el.clientOrderList.innerHTML = clientOrders
@@ -2133,9 +2133,9 @@
           return `
             <div class="user-row">
               <div>
-                <strong>${escapeHtml(order.orderNumber)} Â· ${escapeHtml(order.clientName)}</strong>
-                <div class="small">${stageLabel(order.stage)} Â· ${status.text} Â· ${formatMoney(order.orderValue)}</div>
-                <div class="small">${escapeHtml(order.productName || "Produto nÃ£o informado")} Â· ${totalPieces(order)} peÃ§a${totalPieces(order) === 1 ? "" : "s"}</div>
+                <strong>${escapeHtml(order.orderNumber)} · ${escapeHtml(order.clientName)}</strong>
+                <div class="small">${stageLabel(order.stage)} · ${status.text} · ${formatMoney(order.orderValue)}</div>
+                <div class="small">${escapeHtml(order.productName || "Produto não informado")} · ${totalPieces(order)} peça${totalPieces(order) === 1 ? "" : "s"}</div>
               </div>
               <span class="pill ${order.stage === "pagamento" ? "done" : ""}">${stageLabel(order.stage)}</span>
             </div>
@@ -2161,11 +2161,11 @@
     function requestTypeLabel(type) {
       return {
         novo_pedido: "Novo pedido",
-        producao: "SolicitaÃ§Ã£o da produÃ§Ã£o",
+        producao: "Solicitação da produção",
         mensagem: "Mensagem",
-        interromper: "Interromper produÃ§Ã£o",
-        mudanca: "MudanÃ§a no produto"
-      }[type] || "SolicitaÃ§Ã£o";
+        interromper: "Interromper produção",
+        mudanca: "Mudança no produto"
+      }[type] || "Solicitação";
     }
 
     function renderProductionRequestOptions() {
@@ -2177,7 +2177,7 @@
       }
       const previous = el.productionRequestOrder.value || selectedId || orders[0]?.id || "";
       el.productionRequestOrder.innerHTML = orders.map(order => (
-        `<option value="${order.id}">${escapeHtml(order.orderNumber || "Sem pedido")} Â· ${escapeHtml(order.clientName || "Cliente")}</option>`
+        `<option value="${order.id}">${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</option>`
       )).join("");
       el.productionRequestOrder.value = orders.some(order => order.id === previous) ? previous : orders[0].id;
       const order = orders.find(item => item.id === el.productionRequestOrder.value);
@@ -2187,7 +2187,7 @@
     function renderClientRequests() {
       if (!el.clientRequestList) return;
       if (!usingSupabase) {
-        el.clientRequestList.innerHTML = `<div class="empty">Mensagens de clientes ficam disponÃ­veis na versÃ£o online com Supabase.</div>`;
+        el.clientRequestList.innerHTML = `<div class="empty">Mensagens de clientes ficam disponíveis na versão online com Supabase.</div>`;
         return;
       }
 
@@ -2199,8 +2199,8 @@
       el.clientRequestList.innerHTML = clientRequests.map(request => `
         <div class="user-row">
           <div>
-            <strong>${requestTypeLabel(request.type)} Â· ${escapeHtml(request.order_number || "Sem pedido")}</strong>
-            <div class="small">${escapeHtml(request.client_name || "")} Â· ${escapeHtml(request.client_email || "")} Â· ${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
+            <strong>${requestTypeLabel(request.type)} · ${escapeHtml(request.order_number || "Sem pedido")}</strong>
+            <div class="small">${escapeHtml(request.client_name || "")} · ${escapeHtml(request.client_email || "")} · ${request.created_at ? new Date(request.created_at).toLocaleString("pt-BR") : ""}</div>
             <div class="small">${escapeHtml(request.message || "")}</div>
             ${request.response ? `<div class="request-reply"><strong>Resposta do cliente:</strong><br>${escapeHtml(request.response)}<div class="small">${request.responded_at ? new Date(request.responded_at).toLocaleString("pt-BR") : ""}</div></div>` : ""}
           </div>
@@ -2219,7 +2219,7 @@
           try {
             await sendProductionRequestEmail(request);
           } catch (error) {
-            showToast(error.message || "NÃ£o foi possÃ­vel gerar o e-mail.");
+            showToast(error.message || "Não foi possível gerar o e-mail.");
           }
         });
       });
@@ -2230,9 +2230,9 @@
             await updateClientRequestStatus(button.dataset.resolveRequest, "resolvido");
             clientRequests = await loadClientRequests();
             renderClientRequests();
-            showToast("SolicitaÃ§Ã£o marcada como resolvida.");
+            showToast("Solicitação marcada como resolvida.");
           } catch (error) {
-            showToast(error.message || "NÃ£o foi possÃ­vel atualizar a solicitaÃ§Ã£o.");
+            showToast(error.message || "Não foi possível atualizar a solicitação.");
           }
         });
       });
@@ -2256,13 +2256,13 @@
         return `
           <div class="chart-row">
             <div class="chart-label">${escapeHtml(item.label)}</div>
-            <div class="chart-track" aria-label="${escapeHtml(item.label)}: ${item.orders} pedidos e ${item.pieces} peÃ§as">
+            <div class="chart-track" aria-label="${escapeHtml(item.label)}: ${item.orders} pedidos e ${item.pieces} peças">
               <div class="chart-bar orders" style="width:${orderWidth}%"></div>
               <div class="chart-bar pieces" style="width:${pieceWidth}%"></div>
             </div>
             <div class="chart-values">
               <strong>${item.orders}</strong> pedido${item.orders === 1 ? "" : "s"}<br>
-              <strong>${item.pieces}</strong> peÃ§a${item.pieces === 1 ? "" : "s"}
+              <strong>${item.pieces}</strong> peça${item.pieces === 1 ? "" : "s"}
             </div>
           </div>
         `;
@@ -2282,8 +2282,8 @@
                 </div>
                 ${stageOrders.length ? stageOrders.map(order => `
                   <div class="stage-order-card">
-                    <strong>${escapeHtml(order.orderNumber || "Sem pedido")} Â· ${escapeHtml(order.clientName || "Cliente")}</strong>
-                    <div class="small">${formatDate(order.dueDate)} Â· ${totalPieces(order)} peÃ§a${totalPieces(order) === 1 ? "" : "s"}</div>
+                    <strong>${escapeHtml(order.orderNumber || "Sem pedido")} · ${escapeHtml(order.clientName || "Cliente")}</strong>
+                    <div class="small">${formatDate(order.dueDate)} · ${totalPieces(order)} peça${totalPieces(order) === 1 ? "" : "s"}</div>
                   </div>
                 `).join("") : `<div class="empty">Nenhum pedido.</div>`}
               </div>
@@ -2304,7 +2304,7 @@
         return `
           <button class="stage-btn ${state}" type="button" data-stage="${stage.id}">
             <strong>${stage.label}</strong>
-            <span>${index < currentIndex ? "ConcluÃ­da" : index === currentIndex ? "Atual" : "Pendente"}</span>
+            <span>${index < currentIndex ? "Concluída" : index === currentIndex ? "Atual" : "Pendente"}</span>
           </button>
         `;
       }).join("");
@@ -2322,17 +2322,17 @@
     function emailTemplate(order, stageId) {
       const client = order.clientName || "cliente";
       const pieces = totalPieces(order);
-      const piecesText = `${pieces} peÃ§a${pieces === 1 ? "" : "s"} (${order.qtyBottoms || 0} calcinha${Number(order.qtyBottoms) === 1 ? "" : "s"}, ${order.qtyTops || 0} top${Number(order.qtyTops) === 1 ? "" : "s"}, ${order.qtyCoverups || 0} saÃ­da${Number(order.qtyCoverups) === 1 ? "" : "s"} de praia e ${order.qtyOthers || 0} outro${Number(order.qtyOthers) === 1 ? "" : "s"})`;
-      const subject = `AtualizaÃ§Ã£o do pedido ${order.orderNumber || ""} - ${stageLabel(stageId)}`;
+      const piecesText = `${pieces} peça${pieces === 1 ? "" : "s"} (${order.qtyBottoms || 0} calcinha${Number(order.qtyBottoms) === 1 ? "" : "s"}, ${order.qtyTops || 0} top${Number(order.qtyTops) === 1 ? "" : "s"}, ${order.qtyCoverups || 0} saída${Number(order.qtyCoverups) === 1 ? "" : "s"} de praia e ${order.qtyOthers || 0} outro${Number(order.qtyOthers) === 1 ? "" : "s"})`;
+      const subject = `Atualização do pedido ${order.orderNumber || ""} - ${stageLabel(stageId)}`;
       const invoiceLine = order.deliveryInvoiceNumber ? `\nNota fiscal de entrega: ${order.deliveryInvoiceNumber}.` : "";
       const paymentLine = order.paymentSchedule ? `\n\nPagamentos previstos:\n${order.paymentSchedule}` : "";
       const messages = {
-        "pilotagem": `OlÃ¡, ${client}!\n\nEstamos na etapa de pilotagem do seu pedido ${order.orderNumber}. Neste momento conferimos modelagem, medidas e detalhes antes de iniciar a produÃ§Ã£o.\n\nResumo: ${piecesText}.\nPrevisÃ£o de tÃ©rmino: ${formatDate(order.dueDate)}.\n\nQualquer ajuste combinado serÃ¡ registrado antes da prÃ³xima fase.`,
-        "inicio-producao": `OlÃ¡, ${client}!\n\nSeu pedido ${order.orderNumber} entrou em produÃ§Ã£o. A equipe jÃ¡ iniciou os trabalhos conforme os detalhes aprovados.\n\nResumo: ${piecesText}.\nPrevisÃ£o de tÃ©rmino: ${formatDate(order.dueDate)}.\n\nSeguiremos acompanhando e avisaremos quando avanÃ§ar para arremate.`,
-        "arremate": `OlÃ¡, ${client}!\n\nSeu pedido ${order.orderNumber} chegou Ã  etapa de arremate. Agora estamos cuidando dos acabamentos, revisÃ£o de costura e conferÃªncia das peÃ§as.\n\nResumo: ${piecesText}.\nPrevisÃ£o de tÃ©rmino: ${formatDate(order.dueDate)}.`,
-        "finalizacao": `OlÃ¡, ${client}!\n\nSeu pedido ${order.orderNumber} estÃ¡ em finalizaÃ§Ã£o. Estamos fazendo a Ãºltima conferÃªncia, organizaÃ§Ã£o e preparo para entrega.\n\nResumo: ${piecesText}.\nPrevisÃ£o de tÃ©rmino: ${formatDate(order.dueDate)}.`,
-        "entrega": `OlÃ¡, ${client}!\n\nSeu pedido ${order.orderNumber} foi finalizado e estÃ¡ pronto para entrega.\n\nResumo: ${piecesText}.\nValor do pedido: ${formatMoney(order.orderValue)}.${invoiceLine}${paymentLine}\n\nObrigada pela confianÃ§a!`,
-        "pagamento": `OlÃ¡, ${client}!\n\nSegue acompanhamento de pagamento referente ao pedido ${order.orderNumber}.${invoiceLine}\n\nValor da nota/pedido: ${formatMoney(order.deliveryInvoiceValue || order.orderValue)}.\nCondiÃ§Ã£o: ${order.paymentType === "avista" ? "Ã  vista" : "a prazo"}.\nMeio de pagamento: ${order.paymentMethod || "nÃ£o informado"}.\nStatus: ${order.paymentStatus || "pendente"}.${paymentLine}\n\nFicamos Ã  disposiÃ§Ã£o para qualquer ajuste ou envio de comprovante.`
+        "pilotagem": `Olá, ${client}!\n\nEstamos na etapa de pilotagem do seu pedido ${order.orderNumber}. Neste momento conferimos modelagem, medidas e detalhes antes de iniciar a produção.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.\n\nQualquer ajuste combinado será registrado antes da próxima fase.`,
+        "inicio-producao": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} entrou em produção. A equipe já iniciou os trabalhos conforme os detalhes aprovados.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.\n\nSeguiremos acompanhando e avisaremos quando avançar para arremate.`,
+        "arremate": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} chegou à etapa de arremate. Agora estamos cuidando dos acabamentos, revisão de costura e conferência das peças.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.`,
+        "finalizacao": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} está em finalização. Estamos fazendo a última conferência, organização e preparo para entrega.\n\nResumo: ${piecesText}.\nPrevisão de término: ${formatDate(order.dueDate)}.`,
+        "entrega": `Olá, ${client}!\n\nSeu pedido ${order.orderNumber} foi finalizado e está pronto para entrega.\n\nResumo: ${piecesText}.\nValor do pedido: ${formatMoney(order.orderValue)}.${invoiceLine}${paymentLine}\n\nObrigada pela confiança!`,
+        "pagamento": `Olá, ${client}!\n\nSegue acompanhamento de pagamento referente ao pedido ${order.orderNumber}.${invoiceLine}\n\nValor da nota/pedido: ${formatMoney(order.deliveryInvoiceValue || order.orderValue)}.\nCondição: ${order.paymentType === "avista" ? "à vista" : "a prazo"}.\nMeio de pagamento: ${order.paymentMethod || "não informado"}.\nStatus: ${order.paymentStatus || "pendente"}.${paymentLine}\n\nFicamos à disposição para qualquer ajuste ou envio de comprovante.`
       };
       return { subject, body: messages[stageId] || messages.pilotagem };
     }
@@ -2380,33 +2380,33 @@
         "E-mail": order.clientEmail || "",
         "Telefone": order.clientPhone || "",
         "CPF/CNPJ": order.clientDocument || "",
-        "EndereÃ§o": order.clientAddress || "",
+        "Endereço": order.clientAddress || "",
         "Data do pedido": formatDate(order.orderDate),
-        "InÃ­cio dos trabalhos": formatDate(order.startDate),
-        "PrevisÃ£o de tÃ©rmino": formatDate(order.dueDate),
+        "Início dos trabalhos": formatDate(order.startDate),
+        "Previsão de término": formatDate(order.dueDate),
         "Contador de entrega": deliveryInfo(order).text,
         "Valor do pedido": Number(order.orderValue || 0),
-        "PeÃ§as totais": totalPieces(order),
+        "Peças totais": totalPieces(order),
         "Calcinhas": Number(order.qtyBottoms || 0),
         "Tops": Number(order.qtyTops || 0),
-        "SaÃ­das de praia": Number(order.qtyCoverups || 0),
+        "Saídas de praia": Number(order.qtyCoverups || 0),
         "Outros": Number(order.qtyOthers || 0),
-        "NF remessa - nÃºmero": order.remittanceInvoiceNumber || "",
+        "NF remessa - número": order.remittanceInvoiceNumber || "",
         "NF remessa - data": formatDate(order.remittanceInvoiceDate),
         "NF remessa - valor": Number(order.remittanceInvoiceValue || 0),
         "NF remessa - emitente/remetente": order.remittanceInvoiceSupplier || "",
-        "NF remessa - observaÃ§Ãµes": order.remittanceInvoiceNotes || "",
-        "NF entrega - nÃºmero": order.deliveryInvoiceNumber || "",
+        "NF remessa - observações": order.remittanceInvoiceNotes || "",
+        "NF entrega - número": order.deliveryInvoiceNumber || "",
         "NF entrega - data": formatDate(order.deliveryInvoiceDate),
         "NF entrega - valor": Number(order.deliveryInvoiceValue || 0),
         "Pagamento - data base": formatDate(order.paymentBaseDate),
-        "Pagamento - condiÃ§Ã£o": order.paymentType === "avista" ? "Ã€ vista" : "A prazo",
+        "Pagamento - condição": order.paymentType === "avista" ? "À vista" : "A prazo",
         "Pagamento - parcelas": order.paymentType === "avista" ? "1" : String(order.paymentInstallments || "1"),
         "Pagamento - meio": order.paymentMethod || "",
         "Pagamento - status": order.paymentStatus || "",
         "Pagamento - datas": order.paymentSchedule || buildPaymentSchedule(order),
-        "NF entrega/pagamento - observaÃ§Ãµes": order.deliveryInvoiceNotes || "",
-        "ObservaÃ§Ãµes internas": order.notes || "",
+        "NF entrega/pagamento - observações": order.deliveryInvoiceNotes || "",
+        "Observações internas": order.notes || "",
         "Atualizado em": order.updatedAt ? new Date(order.updatedAt).toLocaleString("pt-BR") : ""
       }));
     }
@@ -2423,7 +2423,7 @@
     function exportExcel() {
       const rows = databaseRows();
       if (!rows.length) {
-        showToast("NÃ£o hÃ¡ pedidos para exportar.");
+        showToast("Não há pedidos para exportar.");
         return;
       }
       const columns = Object.keys(rows[0]);
@@ -2456,13 +2456,13 @@
     function exportPdf() {
       const rows = databaseRows();
       if (!rows.length) {
-        showToast("NÃ£o hÃ¡ pedidos para exportar.");
+        showToast("Não há pedidos para exportar.");
         return;
       }
       const columns = [
-        "Pedido", "Etapa", "Cliente", "Data do pedido", "PrevisÃ£o de tÃ©rmino",
-        "Contador de entrega", "Valor do pedido", "PeÃ§as totais",
-        "NF entrega - nÃºmero", "Pagamento - condiÃ§Ã£o", "Pagamento - meio",
+        "Pedido", "Etapa", "Cliente", "Data do pedido", "Previsão de término",
+        "Contador de entrega", "Valor do pedido", "Peças totais",
+        "NF entrega - número", "Pagamento - condição", "Pagamento - meio",
         "Pagamento - status", "Pagamento - datas"
       ];
       const tableRows = rows.map(row => `
@@ -2477,7 +2477,7 @@
         <html lang="pt-BR">
         <head>
           <meta charset="utf-8">
-          <title>RelatÃ³rio Seam Rio ConfecÃ§Ã£o</title>
+          <title>Relatório Seam Rio Confecção</title>
           <style>
             @page { size: A4 landscape; margin: 12mm; }
             body { font-family: Arial, sans-serif; color: #1f2933; }
@@ -2493,11 +2493,11 @@
           </style>
         </head>
         <body>
-          <h1>Seam Rio ConfecÃ§Ã£o</h1>
-          <div class="meta">RelatÃ³rio de pedidos gerado em ${new Date().toLocaleString("pt-BR")}</div>
+          <h1>Seam Rio Confecção</h1>
+          <div class="meta">Relatório de pedidos gerado em ${new Date().toLocaleString("pt-BR")}</div>
           <div class="summary">
             <div class="box"><span>Pedidos</span><strong>${orders.length}</strong></div>
-            <div class="box"><span>PeÃ§as totais</span><strong>${orders.reduce((sum, order) => sum + totalPieces(order), 0)}</strong></div>
+            <div class="box"><span>Peças totais</span><strong>${orders.reduce((sum, order) => sum + totalPieces(order), 0)}</strong></div>
             <div class="box"><span>Valor total</span><strong>${formatMoney(totalValue)}</strong></div>
             <div class="box"><span>Pedidos ativos</span><strong>${orders.filter(order => order.stage !== "pagamento").length}</strong></div>
           </div>
@@ -2511,7 +2511,7 @@
       const printWindow = window.open("", "_blank");
       if (!printWindow) {
         downloadBlob(report, "text/html;charset=utf-8", `relatorio-seam-rio-${today()}.html`);
-        showToast("Pop-up bloqueado. RelatÃ³rio HTML baixado para gerar PDF.");
+        showToast("Pop-up bloqueado. Relatório HTML baixado para gerar PDF.");
         return;
       }
       printWindow.document.open();
@@ -2552,7 +2552,7 @@
         renderOptions();
         fillForm(null);
         renderAll();
-        showToast("NÃ£o foi possÃ­vel abrir o banco de dados local.");
+        showToast("Não foi possível abrir o banco de dados local.");
       }
     }
 
@@ -2630,9 +2630,9 @@
     el.createProductionRequestBtn?.addEventListener("click", async () => {
       try {
         await createProductionRequest(false);
-        showToast("SolicitaÃ§Ã£o criada para o cliente.");
+        showToast("Solicitação criada para o cliente.");
       } catch (error) {
-        showToast(error.message || "NÃ£o foi possÃ­vel criar a solicitaÃ§Ã£o.");
+        showToast(error.message || "Não foi possível criar a solicitação.");
       }
     });
 
@@ -2640,7 +2640,7 @@
       try {
         await createProductionRequest(true);
       } catch (error) {
-        showToast(error.message || "NÃ£o foi possÃ­vel criar e enviar a solicitaÃ§Ã£o.");
+        showToast(error.message || "Não foi possível criar e enviar a solicitação.");
       }
     });
 
@@ -2670,7 +2670,7 @@
       await saveOrders();
       fillForm(orders[0] || null);
       renderAll();
-      showToast("Pedido excluÃ­do.");
+      showToast("Pedido excluído.");
     });
 
     document.querySelector("#exportExcelBtn").addEventListener("click", exportExcel);
@@ -2695,7 +2695,7 @@
 
     el.manageUsersBtn.addEventListener("click", async () => {
       if (!currentUser || currentUser.role !== "admin") {
-        showToast("Somente administrador pode cadastrar usuÃ¡rios.");
+        showToast("Somente administrador pode cadastrar usuários.");
         return;
       }
       el.userAdminPanel.classList.toggle("show");
@@ -2704,7 +2704,7 @@
 
     el.createUserBtn.addEventListener("click", async () => {
       if (!currentUser || currentUser.role !== "admin") {
-        showToast("Somente administrador pode cadastrar usuÃ¡rios.");
+        showToast("Somente administrador pode cadastrar usuários.");
         return;
       }
       try {
@@ -2723,9 +2723,9 @@
         el.newUserClientEmail.value = "";
         el.newUserRole.value = "operador";
         await renderUserList();
-        showToast("UsuÃ¡rio cadastrado pelo administrador.");
+        showToast("Usuário cadastrado pelo administrador.");
       } catch (error) {
-        showToast(error.message || "NÃ£o foi possÃ­vel cadastrar o usuÃ¡rio.");
+        showToast(error.message || "Não foi possível cadastrar o usuário.");
       }
     });
 
@@ -2736,7 +2736,7 @@
       reader.onload = async () => {
         try {
           const imported = JSON.parse(reader.result);
-          if (!Array.isArray(imported)) throw new Error("Arquivo invÃ¡lido");
+          if (!Array.isArray(imported)) throw new Error("Arquivo inválido");
           orders = imported.map(order => ({ ...order, id: order.id || crypto.randomUUID() }));
           selectedId = orders[0]?.id || null;
           await saveOrders();
@@ -2747,7 +2747,7 @@
           renderAll();
           showToast("Dados importados.");
         } catch {
-          showToast("NÃ£o foi possÃ­vel importar este arquivo.");
+          showToast("Não foi possível importar este arquivo.");
         }
       };
       reader.readAsText(file);

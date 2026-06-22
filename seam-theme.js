@@ -1,6 +1,6 @@
-﻿(function () {
+(function () {
   const pages = [
-    { href: "dashboard.html", title: "Painel Principal", subtitle: "VisÃ£o geral", mark: "01", keys: ["dashboard", "index"] },
+    { href: "dashboard.html", title: "Painel Principal", subtitle: "Visão geral", mark: "01", keys: ["dashboard", "index"] },
     { href: "producao.html", title: "Pedidos", subtitle: "Ordens de venda", mark: "02", keys: ["producao"] },
     { href: "cliente.html", title: "Clientes", subtitle: "Portal e CRM", mark: "03", keys: ["cliente"] },
     { href: "solicitacoes.html", title: "Solicitacoes", subtitle: "Mensagens e aprovacoes", mark: "04", keys: ["solicitacoes"] },
@@ -31,7 +31,7 @@
         <img src="seam-rio-logo.png" alt="Seam Rio">
         <strong>Seam Rio</strong>
       </div>
-      <nav class="seam-global-nav" aria-label="NavegaÃ§Ã£o principal">
+      <nav class="seam-global-nav" aria-label="Navegação principal">
         ${pages.map(page => `
           <a class="${activeFor(page, name) ? "active" : ""}" href="${page.href}">
             <span class="seam-nav-mark">${page.mark}</span>
@@ -64,8 +64,8 @@
       </div>
       <div class="seam-user-box">
         <div>
-          <strong>OlÃ¡, ${user}</strong>
-          <span>OperaÃ§Ã£o Seam Rio</span>
+          <strong>Olá, ${user}</strong>
+          <span>Operação Seam Rio</span>
         </div>
         <div class="seam-avatar">${user.slice(0, 2).toUpperCase()}</div>
       </div>
@@ -93,7 +93,7 @@
       button.addEventListener("click", () => {
         const toast = document.querySelector("#toast");
         if (toast) {
-          toast.textContent = "Alertas e mensagens aparecem nos mÃ³dulos de produÃ§Ã£o e financeiro.";
+          toast.textContent = "Alertas e mensagens aparecem nos módulos de produção e financeiro.";
           toast.classList.add("show");
           setTimeout(() => toast.classList.remove("show"), 2800);
         }
@@ -103,7 +103,7 @@
       button.addEventListener("click", () => {
         const toast = document.querySelector("#toast");
         if (toast) {
-          toast.textContent = "Use o menu lateral para alternar entre os mÃ³dulos.";
+          toast.textContent = "Use o menu lateral para alternar entre os módulos.";
           toast.classList.add("show");
           setTimeout(() => toast.classList.remove("show"), 2800);
         }
