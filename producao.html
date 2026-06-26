@@ -911,6 +911,26 @@
           </section>
 
           <section>
+            <div class="actions-row">
+              <h3 class="section-title">Grade de produtos do pedido</h3>
+              <button class="btn" id="addProductionItemBtn" type="button">+ Adicionar produto</button>
+            </div>
+            <div style="overflow-x:auto;border:1px solid var(--line);border-radius:8px">
+              <table style="width:100%;min-width:1180px;border-collapse:collapse">
+                <thead>
+                  <tr style="background:#075b62;color:#fff">
+                    <th style="padding:8px">Código</th><th>Descrição</th><th>Tipo</th><th>Cor</th>
+                    <th>Preço unit.</th><th>Desc. %</th><th>Valor</th>
+                    <th>PP</th><th>P</th><th>M</th><th>G</th><th>GG</th><th>Total</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="productionItemsBody"></tbody>
+              </table>
+            </div>
+            <div class="small" style="margin-top:8px">Os valores preenchidos aqui ficam disponíveis para consulta no portal do cliente.</div>
+          </section>
+
+          <section>
             <h3 class="section-title">Nota fiscal de remessa de material</h3>
             <div class="grid-4">
               <div class="field">
@@ -933,6 +953,14 @@
             <div class="field" style="margin-top:10px">
               <label for="remittanceInvoiceNotes">Observações da remessa</label>
               <textarea id="remittanceInvoiceNotes" placeholder="Materiais enviados, volumes, transportadora, chave de acesso ou observações fiscais..."></textarea>
+            </div>
+            <div style="margin-top:12px">
+              <strong>Documentos enviados pelo cliente</strong>
+              <div id="productionRemittanceDocuments" class="small" style="display:grid;gap:8px;margin-top:8px"></div>
+            </div>
+            <div style="margin-top:12px">
+              <strong>Fichas técnicas</strong>
+              <div id="productionTechnicalDocuments" class="small" style="display:grid;gap:8px;margin-top:8px"></div>
             </div>
           </section>
 
@@ -1108,6 +1136,9 @@
     ];
 
     let db = null;
+    let productionOrderItems = [];
+    let productionRemittanceAttachments = [];
+    let productionTechnicalSheets = [];
     let cloudDb = null;
     let usingSupabase = false;
     let orders = [];
@@ -1901,7 +1932,103 @@
       el.deliveryStatus.textContent = info.status;
     }
 
+    function productionItemQuantity(item) {
+      return ["pp", "p", "m", "g", "gg"].reduce((sum, size) => sum + Number(item[size] || 0), 0);
+    }
+
+    function productionItemValue(item) {
+      const gross = productionItemQuantity(item) * Number(item.unitPrice || 0);
+      return gross * (1 - Math.min(100, Math.max(0, Number(item.discount || 0))) / 100);
+    }
+
+    function emptyProductionItem() {
+      return { id: crypto.randomUUID(), code: "", description: "", type: "conjunto", color: "", unitPrice: 0, discount: 0, pp: 0, p: 0, m: 0, g: 0, gg: 0 };
+    }
+
+    function productionTypeOptions(selected) {
+      return [["conjunto","Conjunto"],["maio","Maiô"],["vestido","Vestido"],["saida","Saída de praia"],["top","Top"],["calcinha","Calcinha"],["short","Short"],["outro","Outro"]]
+        .map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
+    }
+
+    function syncProductionItems() {
+      const totals = { qtyBottoms: 0, qtyTops: 0, qtyCoverups: 0, qtyOthers: 0 };
+      productionOrderItems.forEach(item => {
+        const quantity = productionItemQuantity(item);
+        if (item.type === "calcinha") totals.qtyBottoms += quantity;
+        else if (item.type === "top") totals.qtyTops += quantity;
+        else if (item.type === "saida") totals.qtyCoverups += quantity;
+        else totals.qtyOthers += quantity;
+      });
+      Object.entries(totals).forEach(([id, value]) => { document.querySelector("#" + id).value = value; });
+      const commercialTotal = productionOrderItems.reduce((sum, item) => sum + productionItemValue(item), 0);
+      if (productionOrderItems.length) document.querySelector("#orderValue").value = commercialTotal.toFixed(2);
+      document.querySelector("#productionItemsBody")?.querySelectorAll("tr").forEach(row => {
+        const item = productionOrderItems.find(entry => entry.id === row.dataset.itemId);
+        if (!item) return;
+        row.querySelector("[data-line-value]").textContent = formatMoney(productionItemValue(item));
+        row.querySelector("[data-line-total]").textContent = productionItemQuantity(item);
+      });
+      updateTotalPieces();
+      renderEmailPreview();
+    }
+
+    function renderProductionItems() {
+      const body = document.querySelector("#productionItemsBody");
+      if (!body) return;
+      body.innerHTML = productionOrderItems.map(item => `
+        <tr data-item-id="${item.id}">
+          <td style="padding:6px"><input data-production-field="code" value="${escapeHtml(item.code)}" style="min-width:90px"></td>
+          <td style="padding:6px"><input data-production-field="description" value="${escapeHtml(item.description)}" style="min-width:190px"></td>
+          <td style="padding:6px"><select data-production-field="type" style="min-width:115px">${productionTypeOptions(item.type)}</select></td>
+          <td style="padding:6px"><input data-production-field="color" value="${escapeHtml(item.color)}" style="min-width:100px"></td>
+          <td style="padding:6px"><input data-production-field="unitPrice" type="number" min="0" step="0.01" value="${Number(item.unitPrice || 0)}" style="width:92px"></td>
+          <td style="padding:6px"><input data-production-field="discount" type="number" min="0" max="100" step="0.01" value="${Number(item.discount || 0)}" style="width:78px"></td>
+          <td style="padding:6px;white-space:nowrap" data-line-value>${formatMoney(productionItemValue(item))}</td>
+          ${["pp","p","m","g","gg"].map(size => `<td style="padding:6px"><input data-production-field="${size}" type="number" min="0" step="1" value="${Number(item[size] || 0)}" style="width:58px"></td>`).join("")}
+          <td style="padding:6px;text-align:center" data-line-total>${productionItemQuantity(item)}</td>
+          <td style="padding:6px"><button class="btn danger" type="button" data-remove-production-item="${item.id}" title="Remover produto">×</button></td>
+        </tr>
+      `).join("");
+      body.querySelectorAll("[data-production-field]").forEach(input => {
+        input.addEventListener("input", () => {
+          const item = productionOrderItems.find(entry => entry.id === input.closest("tr").dataset.itemId);
+          if (!item) return;
+          item[input.dataset.productionField] = input.type === "number" ? Math.max(0, Number(input.value || 0)) : input.value;
+          syncProductionItems();
+        });
+      });
+      body.querySelectorAll("[data-remove-production-item]").forEach(button => {
+        button.addEventListener("click", () => {
+          productionOrderItems = productionOrderItems.filter(item => item.id !== button.dataset.removeProductionItem);
+          renderProductionItems();
+          syncProductionItems();
+        });
+      });
+    }
+
+    function renderProductionDocuments() {
+      const render = (containerId, documents) => {
+        const container = document.querySelector("#" + containerId);
+        if (!container) return;
+        if (!documents.length) {
+          container.innerHTML = `<span>Nenhum arquivo anexado.</span>`;
+          return;
+        }
+        container.innerHTML = documents.map(documentFile => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:#fff">
+            <span style="overflow-wrap:anywhere"><strong>${escapeHtml(documentFile.name)}</strong><br>${Math.max(1, Math.round(Number(documentFile.size || 0) / 1024))} KB</span>
+            <a class="btn" href="${documentFile.data}" download="${escapeHtml(documentFile.name)}">Baixar</a>
+          </div>
+        `).join("");
+      };
+      render("productionRemittanceDocuments", productionRemittanceAttachments);
+      render("productionTechnicalDocuments", productionTechnicalSheets);
+    }
+
     function totalPieces(order) {
+      if (Array.isArray(order.orderItems) && order.orderItems.length) {
+        return order.orderItems.reduce((sum, item) => sum + productionItemQuantity(item), 0);
+      }
       return Number(order.qtyBottoms || 0) + Number(order.qtyTops || 0) + Number(order.qtyCoverups || 0) + Number(order.qtyOthers || 0);
     }
 
@@ -1927,6 +2054,9 @@
         data[id] = input.type === "number" ? Number(input.value || 0) : input.value.trim();
       });
       data.stage = el.stageSelect.value;
+      data.orderItems = productionOrderItems.map(item => ({ ...item }));
+      data.remittanceAttachments = productionRemittanceAttachments.map(file => ({ ...file }));
+      data.technicalSheets = productionTechnicalSheets.map(file => ({ ...file }));
       data.totalPieces = totalPieces(data);
       data.paymentSchedule = buildPaymentSchedule(data);
       data.id = selectedId || crypto.randomUUID();
@@ -1936,6 +2066,9 @@
 
     function fillForm(order) {
       selectedId = order?.id || null;
+      productionOrderItems = Array.isArray(order?.orderItems) ? order.orderItems.map(item => ({ ...item, id: item.id || crypto.randomUUID() })) : [];
+      productionRemittanceAttachments = Array.isArray(order?.remittanceAttachments) ? order.remittanceAttachments.map(file => ({ ...file })) : [];
+      productionTechnicalSheets = Array.isArray(order?.technicalSheets) ? order.technicalSheets.map(file => ({ ...file })) : [];
       document.querySelector("#clientName").value = order?.clientName || "";
       document.querySelector("#clientEmail").value = order?.clientEmail || "";
       document.querySelector("#clientPhone").value = order?.clientPhone || "";
@@ -1967,6 +2100,8 @@
       el.stageSelect.value = order?.stage || "pilotagem";
       el.emailStage.value = order?.stage || "pilotagem";
       document.querySelector("#notes").value = order?.notes || "";
+      renderProductionItems();
+      renderProductionDocuments();
       el.formTitle.textContent = order ? `Pedido ${order.orderNumber}` : "Novo pedido";
       updateTotalPieces();
       updatePaymentControls();
@@ -2596,6 +2731,12 @@
     document.querySelector("#newOrderBtn").addEventListener("click", () => {
       fillForm(null);
       renderAll();
+    });
+
+    document.querySelector("#addProductionItemBtn").addEventListener("click", () => {
+      productionOrderItems.push(emptyProductionItem());
+      renderProductionItems();
+      syncProductionItems();
     });
 
     document.querySelector("#orderForm").addEventListener("submit", async event => {
